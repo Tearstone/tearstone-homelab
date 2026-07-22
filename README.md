@@ -50,7 +50,7 @@ A documented home lab focused on Linux, virtualization, monitoring, automation, 
 
 ## Current Environment
 
-![Grafana Dashboard](/images/grafana_dashboard_pve.png)
+![Grafana Dashboard](images/grafana_dashboard_pve.jpg)
 
 ## Project Status
 
