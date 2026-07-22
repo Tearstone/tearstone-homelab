@@ -48,6 +48,10 @@ A documented home lab focused on Linux, virtualization, monitoring, automation, 
 - Services
 - Lessons Learned
 
+## Current Environment
+
+![Grafana Dashboard](images/grafana_dashboard_pve.png)
+
 ## Project Status
 
 Actively building and documenting
