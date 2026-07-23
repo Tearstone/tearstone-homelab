@@ -4,6 +4,7 @@
 
 Installed from Debian packages.
 
+```bash
 apt install -y curl wget vim htop net-tools unzip
 useradd prometheus
 passwd prometheus
@@ -15,6 +16,7 @@ apt policy prometheus
 apt install -y prometheus
 systemctl start prometheus
 systemctl status prometheus
+```
 
 Validation/Troubleshooting
 
