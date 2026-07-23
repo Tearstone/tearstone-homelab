@@ -11,23 +11,7 @@ graph TD
     Proxmox --> infra-prometheus
 ```
 
-## Proposed Cluster (Second Node) 
-
-```mermaid
-graph LR
-
-NAS[(Shared NFS Storage)]
-
-Node1[EliteDesk 1]
-Node2[EliteDesk 2]
-
-Node1 <-- Cluster --> Node2
-
-Node1 --> NAS
-Node2 --> NAS
-```
-
-## Subgraph Test 
+## Next phase with Switch and NAS Added
 
 ```mermaid
 graph TD
@@ -50,3 +34,20 @@ end
 Switch --> Debian
 Switch --> NAS
 ```
+
+## Proposed Cluster (Second Node) 
+
+```mermaid
+graph LR
+
+NAS[(Shared NFS Storage)]
+
+Node1[EliteDesk 1]
+Node2[EliteDesk 2]
+
+Node1 <-- Cluster --> Node2
+
+Node1 --> NAS
+Node2 --> NAS
+```
+
