@@ -26,3 +26,27 @@ Node1 <-- Cluster --> Node2
 Node1 --> NAS
 Node2 --> NAS
 ```
+
+## Subgraph Test 
+
+```mermaid
+graph TD
+
+Internet --> Router
+Router --> Switch
+
+subgraph "Proxmox Host"
+    Debian
+    Grafana
+    Prometheus
+    Kali
+    Qualys
+end
+
+subgraph "Storage"
+    NAS
+end
+
+Switch --> Debian
+Switch --> NAS
+```
