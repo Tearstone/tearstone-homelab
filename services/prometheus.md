@@ -47,6 +47,7 @@ Location
 
 /etc/prometheus/prometheus.yml
 
+``` yaml
 # Sample config for Prometheus.
 
 global:
@@ -118,3 +119,4 @@ scrape_configs:
       - targets: ['192.168.x.x:9100']
         labels: 
           name: infra-grafana01
+```
