@@ -27,7 +27,7 @@ Browser -->|Views Dashboards| Grafana
 |-----------|---------|:------------:|:------:|
 | Prometheus | Collects and stores metrics from monitored systems | 9090 | ✅ Running |
 | Node Exporter | Exposes Linux system metrics | 9100 | ✅ Running |
-| Grafana | Visualizes metrics and dashboards | 3000 | 🚧 Planned |
+| Grafana | Visualizes metrics and dashboards | 3000 | ✅ Running |
 | Alertmanager | Sends alerts based on Prometheus rules | 9093 | 📅 Future |
 | Blackbox Exporter | Monitors network services and endpoint availability | 9115 | 📅 Future |
 
@@ -50,7 +50,6 @@ Currently monitoring:
 ## Planned Capabilities
 
 - Email alerts
-- Discord notifications
 - SSL certificate expiration
 - HTTP endpoint monitoring
 - DNS monitoring
@@ -75,8 +74,6 @@ Currently monitoring:
 After evaluating several monitoring solutions, I selected the Prometheus ecosystem because it is:
 
 - Open source
-- Widely adopted
-- Lightweight
 - Highly extensible
 - Well integrated with Grafana
 - Commonly used in enterprise environments
