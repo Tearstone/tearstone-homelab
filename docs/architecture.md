@@ -1,7 +1,9 @@
 ```mermaid
 graph TD
     Internet --> Router
-    Router --> Proxmox
+
+    Router --> pve (Proxmox)
+
     Proxmox --> lab-core01
     Proxmox --> lab-kali01
     Proxmox --> lab-qualys01
