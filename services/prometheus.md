@@ -20,11 +20,15 @@ systemctl status prometheus
 
 Validation/Troubleshooting
 
-Log check for errors
+Log check for errors`
+```bash
 journalctl -u prometheus -n 100 --no-pager | grep panic
+```
 
 Validate local Prometheus server is presenting metrics
+```bash
 curl -X POST http://localhost:9090/-/reload
+```
 
 ## Current Targets
 
