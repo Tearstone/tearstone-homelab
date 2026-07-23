@@ -1,9 +1,10 @@
-                 Internet
-                     │
-               Home Router
-                     │
-             Managed Switch
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-      Proxmox Host         Zyxel NAS326
+```mermaid
+graph TD
+    Internet --> Router
+    Router --> Proxmox
+    Proxmox --> lab-core01
+    Proxmox --> lab-kali01
+    Proxmox --> lab-qualys01
+    Proxmox --> infra-grafana
+    Proxmox --> infra-prometheus
+```
