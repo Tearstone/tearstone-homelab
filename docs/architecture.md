@@ -28,7 +28,7 @@ subgraph "Proxmox Host"
 end
 
 subgraph "Storage"
-    NAS
+    Zyxel NAS
 end
 
 Switch --> Debian
