@@ -40,3 +40,5 @@ The Zyxel NAS 326 is EOL/EOS. The app manager no longer works. This is the worka
 21. Check the web_prefix file includes the text ftp://192.168.x.x
 
 22. In the App centar try to update all apps. If you get "Download list success“ then you are good to go!
+
+Reference: https://community.zyxel.com/en/discussion/29667/important-announcement-end-of-ftp-service-support-for-home-nas-series
