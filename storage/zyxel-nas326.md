@@ -2,15 +2,19 @@ Model: Zyxel NAS326
 Firmware: V5.21(AAZF.18) Hotfix 01
 
 ## Storage configuration
-Hard Disk (1) 4 TB ATAST4000VN008-2DR1 SC60 
+Hard Disk (1) 4 TB ATAST4000VN008-2DR1 SC60  
 Hard Disk (2) 4 TB ATAST4000VN008-2DR1 SC60 
 
 Disk Group in a Raid 1 Mirrored Array
 
 Volume 1 on Disk Group ext4 file system
 
-## Packages Installed
-NFS
+## Packages
+### NFS
+Share: homelab  
+Protocol: NFS  
+Client: lab-core01  
+Client IP: 192.168.12.244
 
 ## App Package Repository Workaround
 
