@@ -28,11 +28,11 @@ subgraph "Proxmox Host"
 end
 
 subgraph "Storage"
-    Zyxel
+    Zyxel_NAS
 end
 
 Switch --> Debian
-Switch --> NAS
+Switch --> Zyxel_NAS
 ```
 
 ## Proposed Cluster (Second Node) 
