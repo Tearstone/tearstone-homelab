@@ -160,8 +160,6 @@ The current memory baseline is:
 
 The G5 is currently operating with one memory module. The system has two physical memory slots, with one slot currently unpopulated.
 
-A future upgrade to 32 GB using two 16 GB modules will provide an opportunity to measure the effect of dual-channel memory on memory throughput.
-
 The same benchmark parameters should be used for future comparisons.
 
 A future upgrade to 32 GB using two 16 GB modules will provide an opportunity to compare both capacity and memory-channel performance.
@@ -315,9 +313,145 @@ The goal is to establish actual network throughput before testing NAS/NFS perfor
 
 ## NAS / NFS Benchmark
 
-**Pending**
+The Zyxel NAS326 is being used as shared network storage for the homelab. The NFS share is mounted on the Debian VM `lab-core01` at:
 
-The Zyxel NAS will be benchmarked separately over NFS.
+```text
+/mnt/nas
+```
+
+Benchmark files are stored under:
+
+```text
+/mnt/nas/benchmark
+```
+
+Testing was performed with `fio` from `lab-core01` against the NFS-mounted storage.
+
+## Test Configuration
+
+| Test             | Block Size | I/O Depth | Jobs | Test Size |   Runtime |
+| ---------------- | ---------: | --------: | ---: | --------: | --------: |
+| Sequential Write |      1 MiB |        16 |    1 |     4 GiB | Full test |
+| Sequential Read  |      1 MiB |        16 |    1 |     4 GiB | Full test |
+| Random Read      |      4 KiB |        32 |    1 |     4 GiB |    60 sec |
+| Random Write     |      4 KiB |        32 |    1 |     4 GiB |    60 sec |
+
+All sequential tests used `--direct=1`. The random I/O tests used the default buffered I/O configuration.
+
+---
+
+## NFS Performance Results
+
+| Workload                    |      IOPS |      Bandwidth | Average Latency | P99 Latency |
+| --------------------------- | --------: | -------------: | --------------: | ----------: |
+| **Sequential Read, 1 MiB**  |    **97** | **97.7 MiB/s** |        163.6 ms |      359 ms |
+| **Sequential Write, 1 MiB** |    **17** | **18.0 MiB/s** |        890.8 ms |    1.20 sec |
+| **Random Read, 4 KiB**      |   **118** |  **475 KiB/s** |        268.4 ms |      443 ms |
+| **Random Write, 4 KiB**     | **10.2K** | **39.9 MiB/s** |         3.13 ms |     19.8 ms |
+
+### Sequential Read
+
+The NFS share achieved approximately **97.7 MiB/s** of sequential read throughput using 1 MiB blocks and a queue depth of 16.
+
+This is close to the practical throughput expected from a 1 GbE network connection after accounting for protocol overhead and storage performance.
+
+Read latency averaged approximately **164 ms**, with a P99 latency of approximately **359 ms**.
+
+### Sequential Write
+
+Sequential write performance was significantly lower than sequential read performance.
+
+The test achieved approximately:
+
+* **18.0 MiB/s**
+* **17 IOPS**
+* **891 ms average latency**
+* **1.20 sec P99 latency**
+
+The write result strongly suggests that the NAS storage subsystem is a significant bottleneck for sustained sequential writes. At 18 MiB/s, the workload is well below the theoretical capacity of the 1 GbE link. The independent iperf3 benchmark will confirm whether the network introduces any additional limitation.
+
+### 4K Random Read
+
+The 4K random-read test produced only:
+
+* **118 IOPS**
+* **475 KiB/s**
+* **268 ms average latency**
+* **443 ms P99 latency**
+
+This is a significant reduction in performance compared with sequential reads.
+
+The result demonstrates that the NAS is poorly suited to workloads requiring large numbers of small random reads.
+
+### 4K Random Write
+
+The 4K random-write test produced:
+
+* **10.2K IOPS**
+* **39.9 MiB/s**
+* **3.13 ms average latency**
+* **176 µs median latency**
+* **19.8 ms P99 latency**
+* **204 ms P99.9 latency**
+* **2.67 sec maximum observed latency**
+
+The random-write result is unusual compared with the random-read result. The high IOPS and relatively low median latency suggest that caching and write behavior in the NAS/NFS stack are substantially affecting the result.
+
+The large latency tail is also significant. Although the median operation completed in approximately 176 µs, the P99 latency increased to approximately 20 ms and the P99.9 latency exceeded 200 ms.
+
+---
+
+## NFS Performance Summary
+
+The benchmark demonstrates a substantial difference between sequential and random workloads.
+
+**Sequential read performance is the strongest characteristic of the NAS**, reaching approximately 98 MiB/s and approaching the practical limit of a 1 GbE network connection.
+
+**Sequential write performance is considerably weaker**, reaching 18 MiB/s with nearly 900 ms average I/O latency.
+
+**4K random read performance is particularly poor**, at approximately 118 IOPS and 475 KiB/s.
+
+The 4K random-write result is considerably better at approximately 10.2K IOPS and 39.9 MiB/s, although the large latency tail indicates inconsistent completion times under load.
+
+### Suitability for Homelab Workloads
+
+Based on these results, the NAS is well suited for:
+
+* General file storage
+* Backups
+* ISO images
+* Installation media
+* Large sequential reads
+* Archive storage
+* Infrequently accessed data
+
+The NAS is less suitable for:
+
+* VM boot disks
+* Databases
+* High-I/O virtual machines
+* Write-intensive Docker containers
+* Applications requiring consistently low storage latency
+* Workloads dominated by small random reads
+
+For performance-sensitive VM and container workloads, **local NVMe storage on the EliteDesk G5 should be preferred**.
+
+The NFS share remains valuable as shared capacity and backup storage, but the benchmark results indicate that it should not be considered a replacement for local SSD storage for latency-sensitive workloads.
+
+---
+
+## Benchmark Conclusion
+
+The NFS benchmark confirms that the Zyxel NAS326 is primarily a **capacity and shared-storage resource rather than a high-performance storage subsystem**.
+
+The approximately **97.7 MiB/s sequential read result** demonstrates that the network path can provide useful throughput for large-file operations. However, the **18 MiB/s sequential write**, **118 IOPS 4K random read**, and high random-read latency demonstrate significant limitations for storage-intensive workloads.
+
+For the homelab architecture, the current results support the following storage strategy:
+
+| Storage             | Recommended Workloads                                          |
+| ------------------- | -------------------------------------------------------------- |
+| **Local NVMe**      | VM disks, containers, databases, active application data       |
+| **Zyxel NAS / NFS** | Backups, shared files, ISO images, archives, secondary storage |
 
 Results will be compared against the G5's local NVMe performance to determine whether storage performance is being constrained by:
 
