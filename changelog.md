@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-11
+
+### Applications
+
+* Deployed Immich on `lab-core01` using Docker Compose.
+* Deployed Immich Server, PostgreSQL, Redis/Valkey, and Machine Learning services.
+* Confirmed all Immich containers report healthy.
+* Configured Immich for HTTP access on TCP port 2283.
+* Completed initial Immich privacy and application configuration.
+* Left Storage Template Engine disabled for the initial deployment.
+* Left External Library watching and periodic scanning disabled during initial validation.
+* Enabled Immich Version Check and disabled the optional Map integration.
+
+### Storage
+
+* Created an NFS export for the existing NAS `photo` directory restricted to `lab-core01`.
+* Mounted the photo export at `/mnt/photo-library` on `lab-core01` using NFSv3.
+* Exposed `/mnt/photo-library` to the Immich server container as a read-only bind mount.
+* Configured the existing photo collection as an Immich External Library.
+* Initial discovery identified approximately 94,201 photos and 1,407 videos.
+
+### Performance
+
+* `lab-core01` is configured with 4 vCPU, 8 GB RAM, and 2 GB swap.
+* Initial Immich indexing and machine-learning processing saturated the VM CPU during processing.
+* During the initial scan, the VM reached approximately 4.4 GiB RAM used and 727 MiB swap used.
+* The Proxmox host also reached high memory utilization during the workload. Resource usage will be evaluated again after the initial scan completes.
+
 ## 2026-08-07
 
 ### Infrastructure
