@@ -72,3 +72,32 @@ Services:
 Immich exposes HTTP on TCP port `2283`.
 
 The initial deployment was validated with all four containers reporting healthy.
+
+## Immich Initial Configuration
+
+Initial configuration completed on 2026-08-11.
+
+- Server privacy: configured during initial setup
+- Version Check: enabled
+- Map: disabled
+- Storage Template Engine: disabled initially
+- External Library: configured as `Zyxel Photo Library`
+- External Library path inside the container: `/mnt/photo-library`
+- Library Watching: disabled initially
+- Periodic Scanning: disabled initially
+
+The external library contains the existing photo collection stored on the Zyxel NAS326. Immich accesses the collection in place and does not copy or reorganize the source files.
+
+## Initial Indexing
+
+Initial library scan identified approximately:
+
+- 94,201 photos
+- 1,407 videos
+- Approximately 95,608 total assets
+
+The source collection is approximately 384 GB as measured from `lab-core01` over NFS.
+
+During initial indexing, the 8 GB VM experienced substantial CPU and memory utilization. The Immich server and machine learning containers were the primary consumers. Swap usage increased to approximately 727 MiB during the scan, while the VM continued to report approximately 3.3 GiB available memory.
+
+The Proxmox host also reached high overall memory utilization during the workload. No VM resource changes were made while the initial scan was running. Post-scan resource behavior will be evaluated before increasing the VM allocation.
