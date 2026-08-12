@@ -7,7 +7,7 @@ Primary Linux application server running on Proxmox.
 Current roles:
 
 - Docker host
-- Future Immich application server
+- Immich application server
 - Future home lab application workloads
 
 ## Virtual Machine Details
@@ -28,16 +28,17 @@ Resources:
 
 CPU:
 - 1 socket
-- 4 core
-
-Disk:
-- 80GB virtual disk
+- 4 vCPU
 
 Memory:
-- [document current value]
+- 8 GB configured
+- 2 GB swap
+
+Disk:
+- 80 GB virtual disk
 
 Network:
-- DHCP address assigned from T-Mobile router
+- 192.168.12.244
 
 ## Installed Software
 
@@ -71,4 +72,63 @@ Components installed:
 
 Docker application directory:
 
-/opt/docker
+`/opt`
+
+## NFS Storage
+
+The Zyxel NAS326 at `192.168.12.168` provides NFS storage to this VM.
+
+Current persistent mount:
+
+```text
+192.168.12.168:/i-data/cfb9d897/nfs/homelab -> /mnt/nas
+```
+
+The NAS photo share is also mounted for Immich:
+
+```text
+192.168.12.168:/i-data/cfb9d897/photo -> /mnt/photo-library
+```
+
+The photo mount uses NFSv3 and is exposed to the Immich server container as a read-only bind mount.
+
+## Immich
+
+Immich is deployed with Docker Compose under `/opt/immich`.
+
+Services:
+
+- `immich_server`
+- `immich_postgres`
+- `immich_redis`
+- `immich_machine_learning`
+
+Web interface:
+
+```text
+http://192.168.12.244:2283
+```
+
+The existing Zyxel photo collection is configured as an Immich External Library at:
+
+```text
+/mnt/photo-library
+```
+
+Initial library discovery identified approximately:
+
+- 94,201 photos
+- 1,407 videos
+- 95,608 total assets
+
+The initial scan produced significant CPU and memory activity. At one point the VM reported approximately 4.4 GiB RAM used with 727 MiB swap used, while the Proxmox host was also under high memory utilization. The scan was left running to establish a complete workload baseline.
+
+Initial configuration choices:
+
+- Storage Template Engine: disabled initially
+- Library Watching: disabled during initial validation
+- Periodic Scanning: disabled during initial validation
+- Map: disabled
+- Version Check: enabled
+
+PostgreSQL is currently deployed as part of the Immich Compose stack rather than in a separate LXC. This keeps the application self-contained and avoids unnecessary inter-VM database overhead for the current homelab scale.
