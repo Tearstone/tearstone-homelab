@@ -8,7 +8,7 @@ graph TD
     Router --> Switch["NETGEAR GS108E"]
 
     Switch --> Proxmox["Proxmox Node 1"]
-    Switch --> NAS["Zyxel NAS326  192.168.12.168"]
+    Switch --> NAS["Zyxel NAS326  192.168.12.172"]
 
     subgraph "Proxmox Node 1"
         Core["lab-core01  Debian 13 / Docker"]
@@ -24,16 +24,29 @@ graph TD
     Proxmox --> Grafana
     Proxmox --> Prometheus
 
-    NAS -->|"NFS: homelab"| Core
-    NAS -->|"NFS: photo"| Core
-    Core -->|"read-only bind mount"| Immich["Immich External Library"]
+    NAS -->|"NFSv3: homelab"| Core
+    NAS -->|"NFSv3: photo"| Core
+    Core -->|"read-only bind mount"| External["Immich External Library"]
+    Core -->|"read-write NFS-backed storage"| Immich["Immich Managed Storage"]
 ```
 
 The current homelab consists of a Proxmox virtualization host, Linux VMs and LXCs. `lab-core01` is a dedicated Docker application host, and a Zyxel NAS326 provides network storage using HDD.
 
-The Zyxel NAS326 provides an NFS share named `homelab`, currently restricted to `lab-core01`. A second NFS export provides the existing NAS `photo` directory to `lab-core01` for Immich.
+The Zyxel NAS326 provides an NFS export named `homelab`, currently available to `lab-core01`. A second NFS export provides the existing NAS `photo` directory to `lab-core01` for Immich.
 
-Immich runs as a Docker Compose application on `lab-core01`. Its PostgreSQL and Redis dependencies are containerized alongside the Immich server. The existing NAS photo collection is presented to Immich as a read-only External Library, preserving the NAS filesystem and existing SMB access for other users.
+Immich runs as a Docker Compose application on `lab-core01`. Its PostgreSQL, Redis/Valkey, and Machine Learning dependencies are containerized alongside the Immich server.
+
+The existing NAS photo collection is presented to Immich as a read-only External Library at `/mnt/photo-library`. This preserves the existing NAS filesystem and SMB access for the established photo collection.
+
+Immich managed storage is also hosted on the NAS under `/i-data/cfb9d897/photo/Immich`, mounted on `lab-core01` at `/mnt/immich-photo`. Phone uploads, Immich originals, encoded video, backups, and profile data are stored on the NAS. Immich thumbnails remain on the local NVMe storage at `/opt/immich/library/thumbs` to minimize latency during web and mobile photo browsing. PostgreSQL remains on the local NVMe storage as well.
+
+The Immich managed library uses the default Storage Template:
+
+```text
+{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}
+```
+
+Managed uploads therefore use a human-readable year/date hierarchy, while the existing external photo collection remains independent and is not reorganized by Immich.
 
 Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics.
 
