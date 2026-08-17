@@ -50,6 +50,7 @@ The lab is built as a practical learning environment where new technologies are 
 ### Applications
 
 * Docker
+* Immich
 
 ## Documentation
 
