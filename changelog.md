@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-16
+
+### Applications
+
+* Completed Immich storage migration on `lab-core01`.
+* Moved Immich managed media storage from the local VM disk to the NAS while retaining thumbnails and PostgreSQL on local NVMe.
+* Configured Immich managed storage at `/mnt/immich-photo/Immich` backed by the NAS `photo` NFS export.
+* Retained the existing NAS photo collection as a separate read-only Immich External Library.
+* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`.
+* Successfully migrated and verified a test HEIC asset into the date-based storage hierarchy.
+* Validated iOS mobile photo upload from the phone through Immich to the NAS.
+* Began the full iOS photo backup containing more than 30,000 files.
+
+### Storage
+
+* Added NAS-backed Immich directories for `library`, `upload`, `encoded-video`, `backups`, and `profile`.
+* Kept Immich thumbnails on local NVMe to preserve low-latency browsing performance.
+* Moved approximately 14 GB of encoded video and 1.8 GB of Immich backups from the local VM disk to NAS storage.
+* Reclaimed approximately 15.8 GB from the `lab-core01` VM disk.
+* Reduced `lab-core01` root filesystem utilization from approximately 83% to 62%.
+* Verified NAS copies of 607 encoded video files and 6 backup files before removing the local copies.
+
+### Reliability
+
+* Created pre-migration backups of the Immich Docker Compose and `.env` configuration files.
+* Resolved Immich system-integrity checks by preserving the required `.immich` marker files during the storage migration.
+* Verified all Immich containers healthy after the storage migration.
+
 ## 2026-08-11
 
 ### Applications
