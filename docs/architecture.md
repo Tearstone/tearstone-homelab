@@ -7,10 +7,13 @@ graph TD
     Internet --> Router["T-Mobile Gateway"]
     Router --> Switch["NETGEAR GS108E"]
 
-    Switch --> Proxmox["Proxmox Node 1"]
+    Switch --> PVE["pve 192.168.12.247"]
+    Switch --> PVE02["pve02 192.168.12.248"]
     Switch --> NAS["Zyxel NAS326  192.168.12.172"]
 
-    subgraph "Proxmox Node 1"
+    subgraph "Nexus Proxmox Cluster"
+        PVE <-->|Corosync / Cluster| PVE02
+
         Core["lab-core01  Debian 13 / Docker"]
         Kali["lab-kali01  Kali Linux"]
         Qualys["lab-qualys01  Qualys Scanner"]
@@ -18,11 +21,11 @@ graph TD
         Prometheus["infra-prometheus01  Prometheus"]
     end
 
-    Proxmox --> Core
-    Proxmox --> Kali
-    Proxmox --> Qualys
-    Proxmox --> Grafana
-    Proxmox --> Prometheus
+    PVE --> Core
+    PVE --> Kali
+    PVE --> Qualys
+    PVE --> Grafana
+    PVE --> Prometheus
 
     NAS -->|"NFSv3: homelab"| Core
     NAS -->|"NFSv3: photo"| Core
@@ -30,7 +33,24 @@ graph TD
     Core -->|"read-write NFS-backed storage"| Immich["Immich Managed Storage"]
 ```
 
-The current homelab consists of a Proxmox virtualization host, Linux VMs and LXCs. `lab-core01` is a dedicated Docker application host, and a Zyxel NAS326 provides network storage using HDD.
+The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems.
+
+### Proxmox Nodes
+
+| Node | IP Address | CPU | RAM | Local Storage |
+| ---- | ---------- | --- | --- | ------------- |
+| `pve` | 192.168.12.247 | Intel Core i5-9500T, 6C/6T | 16 GB | 256 GB NVMe |
+| `pve02` | 192.168.12.248 | Intel Core i5-9500, 6C/6T | 16 GB | 256 GB NVMe |
+
+Both nodes run Proxmox VE 9.2.2 and are currently quorate members of the `nexus` cluster.
+
+The nodes are intentionally compact and low-power compared with traditional enterprise servers. The first node uses the 35 W-class i5-9500T, while the second uses the standard i5-9500 to provide an opportunity to compare performance and power characteristics.
+
+`pve02` was installed with a deliberately lean root allocation and approximately 197 GB of local LVM-thin data storage. The first node's future storage expansion is planned around a 1 TB NVMe upgrade; that drive has not yet been purchased or installed.
+
+The Zyxel NAS326 provides network storage using NFS. Shared storage architecture will be finalized as the local NVMe capacity of both Proxmox nodes evolves.
+
+`lab-core01` is a dedicated Docker application host and currently runs Immich and other home lab application workloads. The VM is currently hosted on `pve`; performance and power benchmarks will later evaluate whether `pve02` is a better placement for this workload.
 
 The Zyxel NAS326 provides an NFS export named `homelab`, currently available to `lab-core01`. A second NFS export provides the existing NAS `photo` directory to `lab-core01` for Immich.
 
@@ -50,31 +70,36 @@ Managed uploads therefore use a human-readable year/date hierarchy, while the ex
 
 Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics.
 
+## Cluster
 
-## Proposed Cluster
-
-In the not-to-distant future, we'll add a second HP EliteDesk node to the Proxmox environment and establish a small two-node cluster.
+The Proxmox environment is organized as the `nexus` cluster.
 
 ```mermaid
 graph LR
+    PVE["pve\n192.168.12.247"]
+    PVE02["pve02\n192.168.12.248"]
+    NAS[("Zyxel NAS326\nNFS Storage")]
 
-    NAS[(Zyxel NAS326  NFS Storage)]
-
-    Node1["EliteDesk 1  Proxmox"]
-    Node2["EliteDesk 2  Proxmox"]
-
-    Node1 <-->|Proxmox Cluster| Node2
-
-    Node1 -->|NFS| NAS
-    Node2 -->|NFS| NAS
-
-    Node1 -->|Docker / Immich| Immich1["Immich"]
-    Immich1 -->|External Library| NAS
+    PVE <-->|"Proxmox Cluster / Corosync"| PVE02
+    PVE -->|NFS| NAS
+    PVE02 -->|NFS| NAS
 ```
 
-The second node will provide additional compute capacity and allow experimentation with Proxmox clustering, migration, and high availability concepts.
+The cluster currently provides two-node membership and quorum. It is being used to establish a foundation for workload migration, node comparison, storage planning, and future high-availability experimentation.
 
-The NAS will provide shared storage accessible to both Proxmox nodes.
+## Workload Placement Testing
+
+`lab-core01` is the primary candidate for the first controlled workload-placement experiment.
+
+The planned comparison is:
+
+```text
+lab-core01 on pve
+        vs.
+lab-core01 on pve02
+```
+
+The comparison will measure CPU, memory, storage, network, application responsiveness, and system power consumption where practical. The goal is to determine whether the standard i5-9500 in `pve02` provides a meaningful performance advantage over the i5-9500T in `pve` while retaining the low-power characteristics desired for a continuously running homelab.
 
 ## Initial Layout
 
