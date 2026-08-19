@@ -6,26 +6,34 @@
 graph TD
     Internet --> Router["T-Mobile Gateway"]
     Router --> Switch["NETGEAR GS108E"]
+    Switch --> NAS["Zyxel NAS326 192.168.12.172"]
 
-    Switch --> PVE["pve 192.168.12.247"]
-    Switch --> PVE02["pve02 192.168.12.248"]
-    Switch --> NAS["Zyxel NAS326  192.168.12.172"]
+    subgraph Cluster["Nexus Proxmox Cluster"]
+        direction TB
 
-    subgraph "Nexus Proxmox Cluster"
-        PVE <-->|Corosync / Cluster| PVE02
+        subgraph Nodes["Proxmox Nodes"]
+            direction LR
+            PVE["pve\n192.168.12.247"] <-->|"Corosync / Cluster"| PVE02["pve02\n192.168.12.248"]
+        end
 
-        Core["lab-core01  Debian 13 / Docker"]
-        Kali["lab-kali01  Kali Linux"]
-        Qualys["lab-qualys01  Qualys Scanner"]
-        Grafana["infra-grafana01  Grafana"]
-        Prometheus["infra-prometheus01  Prometheus"]
+        subgraph Workloads["Virtual Machines"]
+            direction LR
+            Kali["lab-kali01\nKali Linux"]
+            Qualys["lab-qualys01\nQualys Scanner"]
+            Grafana["infra-grafana01\nGrafana"]
+            Prometheus["infra-prometheus01\nPrometheus"]
+            Core["lab-core01\nDebian 13 / Docker"]
+        end
+
+        PVE --> Kali
+        PVE --> Qualys
+        PVE --> Grafana
+        PVE --> Prometheus
+        PVE02 --> Core
     end
 
-    PVE02 --> Core
-    PVE --> Kali
-    PVE --> Qualys
-    PVE --> Grafana
-    PVE --> Prometheus
+    Switch --> PVE
+    Switch --> PVE02
 
     NAS -->|"NFSv3: homelab"| Core
     NAS -->|"NFSv3: photo"| Core
