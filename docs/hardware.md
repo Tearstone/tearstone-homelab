@@ -26,8 +26,8 @@ IP Address
 
 Future Upgrades
 
-- 32 GB RAM
-- 1 TB NVMe under consideration / planned purchase
+- 32 GB RAM using a second 16 GB DIMM
+- 1 TB Optimus 5001 NVMe as an additional drive
 
 ### HP EliteDesk 800 G5 Mini — pve02
 
@@ -81,6 +81,27 @@ Nodes
 - `pve02` — 192.168.12.248
 
 The two nodes are HP EliteDesk 800 G5 Desktop Mini systems with the same 6-core/6-thread CPU family but different power/performance variants. `pve` uses the lower-power i5-9500T, while `pve02` uses the standard i5-9500.
+
+## Workload Placement and A/B Testing
+
+`lab-core01` was used as the first controlled workload placement comparison between the two Proxmox nodes. The VM has 4 vCPUs, 12 GB RAM, and an 80 GB virtual disk using `virtio-scsi-single` with I/O thread enabled.
+
+The same sysbench and fio workloads were run on both hosts. The final storage comparison used `sync` and `drop_caches` before each test to avoid using the preliminary cached result.
+
+| Test | lab-core01 on pve | lab-core01 on pve02 | Improvement |
+| ---- | -----------------: | ------------------: | ----------: |
+| CPU, 1 thread | 1,120.76 events/s | 1,436.78 events/s | +28.2% |
+| CPU, 4 threads | 4,427.28 events/s | 5,559.86 events/s | +25.6% |
+| Memory read | 23,835.9 MiB/s | 29,181.1 MiB/s | +22.4% |
+| Memory write | 20,334.1 MiB/s | 25,108.7 MiB/s | +23.5% |
+| 4K random read | 232K IOPS | 300K IOPS | +29.3% |
+| 4K random write | 222K IOPS | 286K IOPS | +29.0% |
+
+The preliminary pve02 storage run produced approximately 462K read IOPS and 455K write IOPS, but those results were not retained as the official comparison because a subsequent cache-cleared test produced approximately 300K/286K IOPS. The cache-cleared results are the authoritative A/B measurements.
+
+The results show that `pve02` is consistently faster for the tested `lab-core01` workload across CPU, memory bandwidth, and random storage I/O. `lab-core01` was therefore migrated to `pve02` and will remain there as the preferred host.
+
+Power consumption has not yet been measured because a suitable power meter is not currently available. The low-power objective remains a design consideration for future measurement.
 
 ## Why this hardware?
 
