@@ -44,10 +44,7 @@ Firmware:
 ## Proxmox
 
 Hostname:
-- `pve02.lab.tearstone.com`
-
-IP address:
-- `192.168.12.248/24`
+- `pve02`
 
 Cluster:
 - `nexus`
@@ -84,7 +81,7 @@ The physical Ethernet interface is presented to Proxmox as `nic0` and connected 
 nic0
   |
   +-- vmbr0
-       192.168.12.248/24
+       internal address omitted from public documentation
 ```
 
 The node uses wired Ethernet for Proxmox cluster communication. The installed Wi-Fi adapter is not used for cluster traffic.
@@ -97,8 +94,8 @@ Current membership:
 
 ```text
 nexus
-├── pve       192.168.12.247
-└── pve02     192.168.12.248
+├── pve
+└── pve02
 ```
 
 The cluster is currently quorate with two expected votes and two total votes.
@@ -130,12 +127,12 @@ write: 25,063 MiB/s
 
 ## lab-core01 Workload Placement Test
 
-`lab-core01` was used as the first controlled workload comparison between `pve` and `pve02`. The VM has 4 vCPUs, 12 GB RAM, and an 80 GB virtual disk using `virtio-scsi-single` with I/O thread enabled.
+`lab-core01` was used as the first controlled workload comparison between `pve01` and `pve02`. The VM has 4 vCPUs, 12 GB RAM, and an 80 GB virtual disk using `virtio-scsi-single` with I/O thread enabled.
 
 The same benchmark suite was run on the VM while hosted on each Proxmox node. Final storage tests used `sync` and `echo 3 > /proc/sys/vm/drop_caches` before each fio run.
 
-| Test | `pve` | `pve02` | Improvement |
-| ---- | ----: | -----: | ----------: |
+| Test | `pve01` | `pve02` | Improvement |
+| ---- | ------: | ------: | ----------: |
 | CPU 1T | 1,120.76 events/s | 1,436.78 events/s | +28.2% |
 | CPU 4T | 4,427.28 events/s | 5,559.86 events/s | +25.6% |
 | Memory read | 23,835.9 MiB/s | 29,181.1 MiB/s | +22.4% |
@@ -173,3 +170,7 @@ The VM retains its full 12 GB allocation. The observed reduction in the Proxmox 
 ## Power Measurement
 
 Power consumption has not yet been measured because a suitable external power meter is not currently available. Power efficiency remains an open measurement for a future test.
+
+## Public Documentation Policy
+
+Actual internal IP addresses, MAC addresses, serial numbers, internal DNS names, and other environment-specific network identifiers are intentionally omitted from this public repository.
