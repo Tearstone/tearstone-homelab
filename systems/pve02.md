@@ -24,6 +24,11 @@ Memory:
 Storage:
 - WDC/SanDisk PC SN730 SDBQNTY-256G-1001 NVMe
 - 238.5 GiB detected capacity
+- SMART health: PASSED
+- Temperature observed during testing: 34 C
+- Percentage used: 13%
+- Data written: approximately 18.8 TB
+- Media and data integrity errors: 0
 
 Network:
 - Intel Ethernet Connection I219-LM
@@ -98,13 +103,73 @@ nexus
 
 The cluster is currently quorate with two expected votes and two total votes.
 
-## Benchmark Plan
+## Host Benchmark Results
 
-`pve02` will be benchmarked against the existing `pve` node. The two systems use the same HP EliteDesk 800 G5 Mini platform and 6-core/6-thread Coffee Lake family but different CPU variants:
+The host's 256 GB SN730 NVMe was tested directly with fio using a 1 MiB sequential read workload:
 
-- `pve`: Intel Core i5-9500T
-- `pve02`: Intel Core i5-9500
+```text
+~2,990 MiB/s read
+~3,135 MB/s reported by fio
+```
 
-`lab-core01` is the first candidate workload for a controlled placement comparison. The VM will be evaluated on both nodes using consistent CPU, memory, storage, and application workload measurements.
+The host also produced approximately 217K 4K random read IOPS and 134K 4K random write IOPS against an 8 GB test logical volume at queue depth 32. These direct-host results establish the baseline for the installed NVMe and LVM-thin storage path.
 
-Power measurements are also planned to determine whether the standard i5-9500 provides a meaningful performance advantage without compromising the low-power objective of the homelab.
+CPU testing with sysbench produced approximately:
+
+```text
+1 thread: 1,438 events/s
+6 threads: 8,131 events/s
+```
+
+Memory testing with 1 MiB blocks produced approximately:
+
+```text
+read: 29,946 MiB/s
+write: 25,063 MiB/s
+```
+
+## lab-core01 Workload Placement Test
+
+`lab-core01` was used as the first controlled workload comparison between `pve` and `pve02`. The VM has 4 vCPUs, 12 GB RAM, and an 80 GB virtual disk using `virtio-scsi-single` with I/O thread enabled.
+
+The same benchmark suite was run on the VM while hosted on each Proxmox node. Final storage tests used `sync` and `echo 3 > /proc/sys/vm/drop_caches` before each fio run.
+
+| Test | `pve` | `pve02` | Improvement |
+| ---- | ----: | -----: | ----------: |
+| CPU 1T | 1,120.76 events/s | 1,436.78 events/s | +28.2% |
+| CPU 4T | 4,427.28 events/s | 5,559.86 events/s | +25.6% |
+| Memory read | 23,835.9 MiB/s | 29,181.1 MiB/s | +22.4% |
+| Memory write | 20,334.1 MiB/s | 25,108.7 MiB/s | +23.5% |
+| 4K random read | 232K IOPS | 300K IOPS | +29.3% |
+| 4K random write | 222K IOPS | 286K IOPS | +29.0% |
+
+The preliminary cached pve02 storage result of approximately 462K read IOPS and 455K write IOPS was discarded from the official comparison. The cache-cleared results above are the authoritative measurements.
+
+The results showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random storage I/O. `lab-core01` was migrated to `pve02` and is now the preferred host for this workload.
+
+## lab-core01 Memory Observation
+
+After migration, the Proxmox API reported:
+
+```text
+maxmem:  12.00 GiB
+mem:      3.50 GiB
+memhost:  9.56 GiB
+```
+
+QEMU reported:
+
+```text
+actual=12288 MiB
+max_mem=12288 MiB
+total_mem=11900 MiB
+free_mem=9664 MiB
+```
+
+Inside the Debian guest, `free -h` showed approximately 2.0 GiB used, 9.5 GiB free, 948 MiB buff/cache, and 9.6 GiB available. Approximately 437 MiB of the guest's 2 GiB swap was in use.
+
+The VM retains its full 12 GB allocation. The observed reduction in the Proxmox memory usage graph after migration is not caused by ballooning reclaiming RAM because QEMU reports `actual=12288` and `max_mem=12288`. The current workload has a relatively small active working set and substantial available memory.
+
+## Power Measurement
+
+Power consumption has not yet been measured because a suitable external power meter is not currently available. Power efficiency remains an open measurement for a future test.
