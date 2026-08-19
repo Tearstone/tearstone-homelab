@@ -23,8 +23,8 @@
 ## Phase 3 — Network and Core Services
 
 - [x] Procure managed network switch
-- [ ] Connect additional lab systems
-- [ ] Establish network performance baseline
+- [x] Connect additional lab systems
+- [x] Establish network performance baseline
 - [ ] Deploy internal DNS
 - [ ] Configure internal hostname resolution
 - [ ] Deploy Certificate Authority
@@ -37,7 +37,7 @@
 
 - [x] Connect Zyxel NAS 326
 - [x] Configure NFS storage
-- [ ] Benchmark NAS/NFS performance
+- [x] Benchmark NAS/NFS performance
 - [ ] Configure automated Proxmox backups
 - [ ] Implement backup verification
 - [ ] Document backup and recovery procedures
@@ -46,7 +46,7 @@
 
 - [x] Install Docker
 - [ ] Deploy Home Assistant
-- [ ] Deploy Immich
+- [x] Deploy Immich
 - [ ] Deploy reverse proxy
 - [ ] Configure HTTPS for internal services
 - [ ] Integrate internal DNS with applications
@@ -54,8 +54,8 @@
 
 ## Phase 6 — Advanced Infrastructure
 
-- [ ] Procure second Proxmox node
-- [ ] Configure Proxmox cluster
+- [x] Procure second Proxmox node
+- [x] Configure Proxmox cluster
 - [ ] Explore high availability
 - [ ] Expand storage infrastructure
 - [ ] Implement centralized logging
@@ -63,6 +63,18 @@
 - [ ] Explore infrastructure as code
 - [ ] Expand security testing environment
 - [ ] Experiment with local LLM infrastructure
+
+## Current Infrastructure Milestones
+
+- [x] Create two-node `nexus` Proxmox cluster
+- [x] Add `pve02` to the cluster as a peer node
+- [x] Migrate `lab-core01` from `pve01` to `pve02`
+- [x] Complete controlled `lab-core01` A/B benchmark between `pve01` and `pve02`
+- [x] Establish G5-specific host benchmark baselines for `pve01` and `pve02`
+- [ ] Measure whole-system power consumption for both G5 nodes
+- [ ] Install 1 TB Optimus 5001 NVMe in `pve01`
+- [ ] Expand `pve01` from 16 GB to 32 GB RAM
+- [ ] Benchmark the upgraded `pve01` configuration
 
 ## Future Ideas
 
@@ -82,9 +94,13 @@
 - [x] Establish GitHub homelab documentation
 - [x] Document G5 hardware configuration
 - [x] Establish G5 performance baseline
-- [ ] Document network architecture
-- [ ] Document service architecture
-- [ ] Document storage architecture
+- [x] Document network architecture
+- [x] Document service architecture
+- [x] Document storage architecture
 - [ ] Document backup architecture
 - [ ] Document security architecture
-- [ ] Maintain benchmark history
+- [x] Maintain benchmark history
+
+## Notes
+
+The roadmap is updated to reflect the current infrastructure as of August 19, 2026. The two-node Proxmox cluster and initial workload benchmarking are complete. High availability remains exploratory rather than implemented.
