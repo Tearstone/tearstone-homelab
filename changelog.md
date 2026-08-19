@@ -13,6 +13,7 @@
 * Added current whole-system power measurement status and future power testing to the G5 benchmark documentation.
 * Updated `benchmarking/readme.md` to serve as the index for the node-specific G5 baselines, workload comparison, network baseline, and NAS/NFS results.
 * Identified `benchmarking/G5-Performance.md` as the legacy G5 benchmark document; future benchmark updates should use the node-specific `pve01` and `pve02` documents.
+* Removed private IP addresses, MAC addresses, serial numbers, and internal DNS details from public infrastructure documentation while retaining useful architecture and benchmark information.
 
 ## 2026-08-16
 
@@ -65,10 +66,10 @@
 
 ### Performance
 
-* `lab-core01` is configured with 4 vCPU, 8 GB RAM, and 2 GB swap.
+* `lab-core01` was initially configured with 4 vCPU, 8 GB RAM, and 2 GB swap.
 * Initial Immich indexing and machine-learning processing saturated the VM CPU during processing.
 * During the initial scan, the VM reached approximately 4.4 GiB RAM used and 727 MiB swap used.
-* The Proxmox host also reached high memory utilization during the workload. Resource usage will be evaluated again after the initial scan completes.
+* The Proxmox host also reached high memory utilization during the workload. Resource usage was evaluated again after migration to `pve02`.
 
 ## 2026-08-07
 
@@ -83,7 +84,7 @@
 
 * Installed and enabled NFS on NAS326.
 * Created and exported the `homelab` NFS share.
-* Restricted NFS access to `lab-core01` (`192.168.12.244`).
+* Restricted NFS access to `lab-core01`.
 
 ## 2026-07-21
 
@@ -101,7 +102,8 @@
 - Installed Node Exporter - Full dashboard
 
 ## 2026-07-19
+
 - Installed Prometheus
-- Transferred Debian 13 VM from VMware Fusion running on Macbook to Proxmox node 1
-- Transferred Qualys Scanner Appliance from VMware Fusion running on Macbook Proxmox node 1
+- Transferred Debian 13 VM from VMware Fusion running on MacBook to Proxmox node 1
+- Transferred Qualys Scanner Appliance from VMware Fusion on MacBook to Proxmox node 1
 - Provisioned Kali Linux VM
