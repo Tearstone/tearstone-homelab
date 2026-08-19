@@ -1,12 +1,14 @@
-# G5 Performance-pve01
+# G5 Performance: pve01
 
-Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE.
+Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE on `pve01`.
 
 ## System
 
 | Component          | Specification             |
 | ------------------ | ------------------------- |
 | System             | HP EliteDesk 800 G5 Mini  |
+| Proxmox Node       | `pve01`                   |
+| IP Address         | `192.168.12.247/24`       |
 | CPU                | Intel Core i5-9500T       |
 | CPU Cores          | 6                         |
 | CPU Threads        | 6                         |
@@ -26,6 +28,8 @@ Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE.
 | Network Interface  | `nic0`                    |
 | Proxmox Bridge     | `vmbr0`                   |
 
+`pve01` is the first physical node in the two-node `nexus` Proxmox cluster. It uses the 35 W-class Intel Core i5-9500T processor.
+
 ## Network Configuration
 
 The G5 is connected to the homelab network using its physical Ethernet interface.
@@ -34,7 +38,7 @@ The G5 is connected to the homelab network using its physical Ethernet interface
 | ---------------- | ------------------- |
 | Interface        | `nic0`              |
 | MAC Address      | `04:0e:3c:a8:ff:5b` |
-| Proxmox Bridge   | `vmbr0`             |
+| Proxmox Bridge   | `vmbr0`              |
 | IP Address       | `192.168.12.247/24` |
 | Link Speed       | 1000 Mb/s           |
 | Duplex           | Full                |
@@ -44,18 +48,32 @@ The G5 is connected to the homelab network using its physical Ethernet interface
 The physical network path is:
 
 ```text
-G5
+pve01
  │
  │ 1 Gb Ethernet
  ▼
 NETGEAR GS108E
  │
+ ├── pve02
  ├── Zyxel NAS
  ├── Proxmox guests
  └── Other network devices
 ```
 
 A 1 Gb Ethernet connection provides a theoretical maximum of 125 MB/s before protocol and filesystem overhead.
+
+### Network Benchmark
+
+Network throughput was measured with `iperf3` between `pve01` (`192.168.12.247`) and `pve02` (`192.168.12.248`).
+
+| Direction | Throughput | Retransmits |
+| --------- | ---------: | ----------: |
+| `pve01` → `pve02` | **934 Mbits/sec** | 0 |
+| `pve02` → `pve01` | **935 Mbits/sec** | 0 |
+
+The measured throughput is approximately 93.4% of the nominal 1 Gb Ethernet line rate and is consistent with a healthy 1 GbE connection after protocol overhead.
+
+The network path between the two Proxmox nodes is therefore not showing an obvious performance limitation.
 
 ## Storage Configuration
 
@@ -83,13 +101,13 @@ The `pve-data` LVM-thin pool currently contains virtual disks for the Proxmox wo
 | Namespace | 1                    |
 | Capacity  | 256.06 GB            |
 
-Storage benchmarks will be performed using controlled test files rather than destructive whole-device testing because this is the active Proxmox system disk.
+Storage benchmarks are performed using controlled test files or test volumes rather than destructive whole-device testing because this is the active Proxmox system disk.
 
 ## CPU Benchmark
 
-### Method
+### Host CPU Baseline
 
-CPU performance was measured using `sysbench`.
+CPU performance was measured using `sysbench` directly on the Proxmox host.
 
 Parameters:
 
@@ -109,12 +127,12 @@ Duration: 60 seconds
 
 ### Baseline
 
-The official CPU baseline uses the results obtained with all VMs and LXCs stopped:
+The official host CPU baseline uses the results obtained with all VMs and LXCs stopped:
 
 * **Single-thread:** 1,221.43 events/sec
 * **Six-thread:** 6,734.57 events/sec
 
-The initial single-thread test was performed while Proxmox guests were running and therefore is retained for comparison but is not used as the primary baseline.
+The initial single-thread test was performed while Proxmox guests were running and therefore is retained for comparison but is not used as the primary host baseline.
 
 ### Observations
 
@@ -126,9 +144,9 @@ The six-thread result reached approximately 5.5× the single-thread performance.
 
 The system currently contains a single 16 GB DDR4-2667 SODIMM.
 
-### Method
+### Host Memory Baseline
 
-Memory performance was measured using `sysbench`.
+Memory performance was measured using `sysbench` directly on the Proxmox host.
 
 Parameters:
 
@@ -151,18 +169,35 @@ Scope: global
 
 The system is currently configured with a single 16 GB DDR4-2667 SODIMM.
 
-The current memory baseline is:
+The current host memory baseline is:
 
 * **Read:** 25,645.48 MiB/sec
 * **Write:** 21,665.73 MiB/sec
 
-### Observations
-
-The G5 is currently operating with one memory module. The system has two physical memory slots, with one slot currently unpopulated.
-
 The same benchmark parameters should be used for future comparisons.
 
 A future upgrade to 32 GB using two 16 GB modules will provide an opportunity to compare both capacity and memory-channel performance.
+
+## lab-core01 Workload Placement Benchmark
+
+The workload-placement benchmark measures the same `lab-core01` VM on `pve01` and `pve02`. This is the appropriate comparison for deciding which physical node should host the VM.
+
+The VM was configured with 4 vCPUs and 12 GB RAM on both nodes.
+
+### Controlled Results
+
+| Test | `lab-core01` on `pve01` | `lab-core01` on `pve02` | Change |
+| ---- | ----------------------: | -----------------------: | -----: |
+| CPU 1T | 1,120.76 events/s | **1,436.78 events/s** | **+28.2%** |
+| CPU 4T | 4,427.28 events/s | **5,559.86 events/s** | **+25.6%** |
+| Memory read | 23,835.9 MiB/s | **29,181.1 MiB/s** | **+22.4%** |
+| Memory write | 20,334.1 MiB/s | **25,108.7 MiB/s** | **+23.5%** |
+| 4K random read | 232K IOPS | **300K IOPS** | **+29.3%** |
+| 4K random write | 222K IOPS | **286K IOPS** | **+29.0%** |
+
+The storage values in this table are the controlled cache-cleared VM filesystem tests. They are separate from the host raw-NVMe and LVM-thin test-volume results documented below.
+
+The comparison showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random I/O. `lab-core01` was therefore migrated to `pve02` and remains there as its preferred placement.
 
 ## NVMe Benchmark
 
@@ -302,15 +337,6 @@ Future NVMe health checks should monitor:
 * Temperature
 * Power-on hours
 
-
-## Network Benchmark
-
-**Pending**
-
-Network throughput will be measured using `iperf3`.
-
-The goal is to establish actual network throughput before testing NAS/NFS performance.
-
 ## NAS / NFS Benchmark
 
 The Zyxel NAS326 is being used as shared network storage for the homelab. The NFS share is mounted on the Debian VM `lab-core01` at:
@@ -368,7 +394,7 @@ The test achieved approximately:
 * **891 ms average latency**
 * **1.20 sec P99 latency**
 
-The write result strongly suggests that the NAS storage subsystem is a significant bottleneck for sustained sequential writes. At 18 MiB/s, the workload is well below the theoretical capacity of the 1 GbE link. The independent iperf3 benchmark will confirm whether the network introduces any additional limitation.
+The write result strongly suggests that the NAS storage subsystem is a significant bottleneck for sustained sequential writes. At 18 MiB/s, the workload is well below the theoretical capacity of the 1 GbE link. The independent iperf3 benchmark confirms that the network itself is capable of approximately 934 to 935 Mbits/sec between the Proxmox nodes.
 
 ### 4K Random Read
 
@@ -461,6 +487,14 @@ Results will be compared against the G5's local NVMe performance to determine wh
 * NAS storage subsystem
 * NAS CPU or other hardware limitations
 
+## Power Measurement
+
+Whole-system power consumption has **not** been measured.
+
+A suitable power meter was not available during testing, so no idle or load wattage should be inferred from the CPU TDP, NVMe power states, or benchmark results.
+
+Power efficiency remains a future measurement. The goal is to compare the two G5 systems under idle and representative homelab workloads rather than rely on component TDP values.
+
 ## Future Comparisons
 
 This baseline can be repeated after hardware or configuration changes.
@@ -474,6 +508,7 @@ Potential future comparisons:
 * Current Zyxel NAS vs. future NAS
 * 1 Gb Ethernet vs. future network upgrade
 * Idle system vs. system under virtualization workload
+* Whole-system power consumption on `pve01` vs. `pve02`
 
 ## Benchmarking Tools
 
@@ -492,5 +527,7 @@ stress-ng
 ## Baseline Date
 
 **August 8, 2026**
+
+**Last updated:** August 19, 2026
 
 Additional benchmark results will be added as testing progresses.
