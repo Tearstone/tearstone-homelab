@@ -2,27 +2,21 @@
 
 ## Compute
 
-### HP EliteDesk 800 G5 Mini — pve
+### HP EliteDesk 800 G5 Mini — pve01
 
-CPU
-Intel Core i5-9500T
-6 cores / 6 threads
+CPU  
+Intel Core i5-9500T  
+6 cores / 6 threads  
 2.2 GHz base / 3.7 GHz turbo
 
-Memory
+Memory  
 16 GB DDR4
 
-Storage
+Storage  
 256 GB NVMe
 
-Network
+Network  
 Intel I219-LM 1 Gb Ethernet
-
-Hostname
-`pve.lab.tearstone.com`
-
-IP Address
-`192.168.12.247/24`
 
 Future Upgrades
 
@@ -31,32 +25,26 @@ Future Upgrades
 
 ### HP EliteDesk 800 G5 Mini — pve02
 
-CPU
-Intel Core i5-9500
-6 cores / 6 threads
+CPU  
+Intel Core i5-9500  
+6 cores / 6 threads  
 3.0 GHz base frequency
 
-Memory
-16 GB DDR4
+Memory  
+16 GB DDR4  
 2 × 8 GB
 
-Storage
+Storage  
 256 GB WDC/SanDisk PC SN730 NVMe
 
-Network
+Network  
 Intel I219-LM 1 Gb Ethernet
 
-Wireless
+Wireless  
 Intel Wi-Fi 6 AX200
 
-Graphics
+Graphics  
 Intel UHD Graphics 630
-
-Hostname
-`pve02.lab.tearstone.com`
-
-IP Address
-`192.168.12.248/24`
 
 Proxmox Storage Layout
 
@@ -72,15 +60,15 @@ The installation intentionally reserves approximately 16 GB of free LVM space fo
 
 ## Proxmox Cluster
 
-Cluster name
+Cluster name  
 `nexus`
 
 Nodes
 
-- `pve` — 192.168.12.247
-- `pve02` — 192.168.12.248
+- `pve01`
+- `pve02`
 
-The two nodes are HP EliteDesk 800 G5 Desktop Mini systems with the same 6-core/6-thread CPU family but different power/performance variants. `pve` uses the lower-power i5-9500T, while `pve02` uses the standard i5-9500.
+The two nodes are HP EliteDesk 800 G5 Desktop Mini systems with the same 6-core/6-thread CPU family but different power/performance variants. `pve01` uses the lower-power i5-9500T, while `pve02` uses the standard i5-9500.
 
 ## Workload Placement and A/B Testing
 
@@ -88,8 +76,8 @@ The two nodes are HP EliteDesk 800 G5 Desktop Mini systems with the same 6-core/
 
 The same sysbench and fio workloads were run on both hosts. The final storage comparison used `sync` and `drop_caches` before each test to avoid using the preliminary cached result.
 
-| Test | lab-core01 on pve | lab-core01 on pve02 | Improvement |
-| ---- | -----------------: | ------------------: | ----------: |
+| Test | lab-core01 on pve01 | lab-core01 on pve02 | Improvement |
+| ---- | ------------------: | ------------------: | ----------: |
 | CPU, 1 thread | 1,120.76 events/s | 1,436.78 events/s | +28.2% |
 | CPU, 4 threads | 4,427.28 events/s | 5,559.86 events/s | +25.6% |
 | Memory read | 23,835.9 MiB/s | 29,181.1 MiB/s | +22.4% |
@@ -118,3 +106,7 @@ After comparing with Raspberry Pi and HP EliteDesk Minis, I selected the EliteDe
 The compact EliteDesk Mini platform was selected instead of larger enterprise servers because the homelab prioritizes low power consumption, low noise, and minimal rack/desk space while still providing x86 virtualization capabilities.
 
 The two-node `nexus` cluster provides a platform for testing Proxmox clustering, migration, workload placement, performance comparison, and future high-availability concepts.
+
+## Public Documentation Policy
+
+This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, and other unnecessary infrastructure identifiers. Architecture and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme.
