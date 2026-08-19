@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-19
+
+### Benchmarking
+
+* Reconciled the G5 Proxmox benchmark documentation for `pve01` and `pve02` so both node documents use consistent structure, terminology, and benchmark scope.
+* Standardized the node-specific documentation around `pve01` and `pve02` rather than the legacy `G5-Performance.md` document.
+* Added the `pve01` ↔ `pve02` `iperf3` network baseline: approximately 934 to 935 Mbits/sec with zero retransmits in both directions.
+* Distinguished Proxmox host CPU and memory benchmarks from the controlled `lab-core01` VM workload benchmarks.
+* Documented the controlled `lab-core01` A/B comparison showing `pve02` ahead of `pve01` by approximately 22% to 29% across CPU, memory bandwidth, and 4K random I/O.
+* Confirmed `lab-core01` as the preferred workload placement on `pve02`.
+* Added current whole-system power measurement status and future power testing to the G5 benchmark documentation.
+* Updated `benchmarking/readme.md` to serve as the index for the node-specific G5 baselines, workload comparison, network baseline, and NAS/NFS results.
+* Identified `benchmarking/G5-Performance.md` as the legacy G5 benchmark document; future benchmark updates should use the node-specific `pve01` and `pve02` documents.
+
 ## 2026-08-16
 
 ### Applications
