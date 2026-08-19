@@ -18,24 +18,40 @@ The lab is built as a practical learning environment where new technologies are 
 
 ### Compute
 
-* HP EliteDesk 800 G5 Mini
+* HP EliteDesk 800 G5 Mini `pve01`
+  * Intel Core i5-9500T
+  * 16 GB RAM
+  * Proxmox VE
+* HP EliteDesk 800 G5 Mini `pve02`
+  * Intel Core i5-9500
+  * 16 GB RAM
+  * Proxmox VE
 * MacBook Pro 2020
+
+### Virtualization
+
+* Proxmox VE 9.x
+* Two-node Proxmox cluster: `nexus`
+* `pve01` — `192.168.12.247`
+* `pve02` — `192.168.12.248`
+* Debian Linux VM
+* Kali Linux VM
+* Qualys Scanner Appliance
+* `lab-core01` Docker application VM, currently hosted on `pve02`
 
 ### Storage
 
 * Zyxel NAS326
-* Local Toshiba NVMe storage
+* Local NVMe storage on both G5 nodes
+* NFS shared storage
+* NAS-backed Immich media storage
 
 ### Networking
 
 * NETGEAR GS108E managed switch
 * 1 Gb Ethernet
-
-### Virtualization
-
-* Proxmox VE
-* Debian Linux
-* Kali Linux
+* Proxmox `vmbr0`
+* Node-to-node `iperf3` baseline of approximately 934–935 Mbit/sec
 
 ### Monitoring
 
@@ -46,6 +62,7 @@ The lab is built as a practical learning environment where new technologies are 
 ### Security
 
 * Qualys Scanner Appliance
+* Kali Linux
 
 ### Applications
 
@@ -54,32 +71,57 @@ The lab is built as a practical learning environment where new technologies are 
 
 ## Documentation
 
-| Area         | Documentation                        |
-| ------------ | ------------------------------------ |
+| Area | Documentation |
+| ---- | ------------- |
 | Architecture | [Architecture](docs/architecture.md) |
-| Hardware     | [Hardware](docs/hardware.md)         |
-| Monitoring   | [Monitoring](docs/monitoring.md)     |
-| Systems      | [Systems](systems/)                  |
-| Services     | [Services](services/)                |
-| Storage      | [Storage](storage/)                  |
-| Applications | [Applications](applications/)        |
-| Benchmarking | [Benchmarking](benchmarking/)        |
-| Roadmap      | [Roadmap](roadmap.md)                |
-| Changelog    | [Changelog](changelog.md)            |
+| Hardware | [Hardware](docs/hardware.md) |
+| Monitoring | [Monitoring](docs/monitoring.md) |
+| Systems | [Systems](systems/) |
+| Services | [Services](services/) |
+| Storage | [Storage](storage/) |
+| Applications | [Applications](applications/) |
+| Benchmarking | [Benchmarking](benchmarking/) |
+| Roadmap | [Roadmap](roadmap.md) |
+| Changelog | [Changelog](changelog.md) |
 
 ## Performance Baseline
 
-The HP EliteDesk 800 G5 serves as the initial compute node for the lab.
+Both HP EliteDesk 800 G5 Mini systems have been benchmarked as Proxmox nodes, and `lab-core01` has been tested on both nodes using controlled A/B workloads.
 
-Performance testing has been performed against:
+The current results show `pve02` providing a consistent performance advantage for `lab-core01`, with approximately 22–29% improvement across the tested CPU, memory, and 4K random I/O workloads. `lab-core01` has therefore been migrated to `pve02` as its preferred placement.
+
+Benchmarks cover:
 
 * CPU
 * Memory
 * NVMe storage
+* LVM-thin storage
+* 4K random I/O
+* 1 Gb Ethernet
+* NAS/NFS storage
+* `lab-core01` workload performance across both G5 nodes
 
-Network and NAS/NFS performance testing will be added as the lab expands.
+See the [Benchmarking](benchmarking/) documentation for node-specific results and methodology:
 
-See the [G5 Performance Baseline](benchmarking/G5-Performance.md) for detailed results and methodology.
+* [G5 Performance — pve01](benchmarking/G5-Performance-pve01.md)
+* [G5 Performance — pve02](benchmarking/G5-Performance-pve02.md)
+* [Benchmarking README](benchmarking/readme.md)
+
+Whole-system power consumption has not yet been measured.
+
+## Current Direction
+
+The immediate infrastructure direction is to continue optimizing the two-node G5 Proxmox cluster rather than moving to larger enterprise servers.
+
+Planned work includes:
+
+* Install the planned 1 TB Optimus 5001 NVMe in the appropriate G5 node
+* Evaluate a second 16 GB DIMM and 32 GB dual-channel configuration
+* Measure whole-system idle and load power
+* Continue storage and network performance testing
+* Implement automated Proxmox backups and backup verification
+* Expand monitoring, DNS, TLS, and network services
+* Explore VLANs, segmentation, automation, and additional security infrastructure
 
 ## Current Environment
 
@@ -89,4 +131,4 @@ See the [G5 Performance Baseline](benchmarking/G5-Performance.md) for detailed r
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab will evolve over time as additional compute nodes, storage, networking, monitoring, automation, and security capabilities are added.
+The lab is now a two-node Proxmox environment with shared NAS storage, containerized applications, centralized monitoring, and an established performance baseline. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
