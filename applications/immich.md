@@ -13,7 +13,7 @@ Host:
 * `lab-core01`
 * Debian 13
 * 4 vCPU
-* 8 GB RAM
+* 12 GB RAM
 * Local NVMe storage
 
 Containers:
@@ -25,7 +25,7 @@ Containers:
 
 Web interface:
 
-* TCP 2283
+* TCP 2283 on the internal network
 
 Configuration directory:
 
@@ -53,13 +53,7 @@ Immich uses a split storage model. Latency-sensitive metadata and thumbnails rem
 | Profile | `/mnt/immich-photo/Immich/profile` | NAS NFSv3 |
 | Existing photo collection | `/mnt/photo-library` | NAS NFSv3, read-only in container |
 
-The NAS export is:
-
-```text
-192.168.12.172:/i-data/cfb9d897/photo
-```
-
-mounted at:
+The NAS `photo` export is mounted at:
 
 ```text
 /mnt/immich-photo
@@ -90,34 +84,30 @@ The external library is read-only from the Immich container. Immich does not reo
 Immich's Storage Template is enabled using the default template:
 
 ```text
-{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}
+{{y}}/{{y}}-{{MM}}/{{dd}}/{{filename}}
 ```
 
-Managed media therefore follows a date-based hierarchy such as:
-
-```text
-Immich/library/admin/2026/2026-08-16/IMG_2736.heic
-```
+Managed media therefore follows a date-based hierarchy.
 
 This keeps the Immich-managed upload area human-readable while leaving the existing master photo collection untouched.
 
 ## Mobile Backup
 
-The iOS Immich application is being configured for automatic photo backup.
+The iOS Immich application is configured for automatic photo backup.
 
 Validated upload path:
 
 ```text
- iPhone
+iPhone
    -> Immich mobile backup
    -> lab-core01
    -> /mnt/immich-photo/Immich
-   -> Zyxel NAS `/i-data/cfb9d897/photo/Immich`
+   -> Zyxel NAS photo filesystem
 ```
 
 A test HEIC upload was successfully verified on the NAS before beginning the full camera-roll upload.
 
-The initial mobile migration includes more than 30,000 files and is being allowed to run unattended. Video backup will be enabled separately after photo backup completes successfully.
+The initial mobile migration includes more than 30,000 files. Video backup is enabled separately after photo backup validation.
 
 ## Performance Considerations
 
@@ -140,3 +130,7 @@ Before the Immich storage migration, the existing 14 GB encoded-video data and 1
 Do not manually move or rename files within Immich's managed storage. Immich tracks managed media paths in its database and Storage Template operations should be used for managed media changes.
 
 The existing external library may be reorganized independently because it remains outside Immich's managed storage.
+
+## Public Documentation Policy
+
+Internal IP addresses, internal DNS names, and other environment-specific network identifiers are intentionally omitted from this public repository. Service ports, mount points, storage paths, and architecture are retained where they are useful for understanding the deployment.
