@@ -32,12 +32,10 @@ The lab is built as a practical learning environment where new technologies are 
 
 * Proxmox VE 9.x
 * Two-node Proxmox cluster: `nexus`
-* `pve01` — `192.168.12.247`
-* `pve02` — `192.168.12.248`
+* `lab-core01` Docker application VM, currently hosted on `pve02`
 * Debian Linux VM
 * Kali Linux VM
 * Qualys Scanner Appliance
-* `lab-core01` Docker application VM, currently hosted on `pve02`
 
 ### Storage
 
@@ -101,11 +99,7 @@ Benchmarks cover:
 * NAS/NFS storage
 * `lab-core01` workload performance across both G5 nodes
 
-See the [Benchmarking](benchmarking/) documentation for node-specific results and methodology:
-
-* [G5 Performance — pve01](benchmarking/G5-Performance-pve01.md)
-* [G5 Performance — pve02](benchmarking/G5-Performance-pve02.md)
-* [Benchmarking README](benchmarking/readme.md)
+See the [Benchmarking](benchmarking/) documentation for node-specific results and methodology.
 
 Whole-system power consumption has not yet been measured.
 
@@ -123,9 +117,11 @@ Planned work includes:
 * Expand monitoring, DNS, TLS, and network services
 * Explore VLANs, segmentation, automation, and additional security infrastructure
 
-## Current Environment
+## Public Documentation Policy
 
-![Grafana Dashboard](images/grafana_dashboard_pve.jpg)
+This repository is public. Documentation intentionally describes architecture, configuration concepts, and benchmark results without publishing unnecessary internal network identifiers such as private IP addresses, MAC addresses, or internal DNS details.
+
+Actual addressing and other environment-specific operational details are maintained separately from the public repository.
 
 ## Project Status
 
