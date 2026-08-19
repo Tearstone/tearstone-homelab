@@ -15,6 +15,9 @@ Current roles:
 Hypervisor:
 - Proxmox VE
 
+Current host:
+- `pve02`
+
 Operating System:
 - Debian GNU/Linux 13 (Trixie)
 
@@ -31,14 +34,14 @@ CPU:
 - 4 vCPU
 
 Memory:
-- 8 GB configured
+- 12 GB configured
 - 2 GB swap
 
 Disk:
 - 80 GB virtual disk
 
 Network:
-- 192.168.12.244
+- Internal network address intentionally omitted from public documentation
 
 ## Installed Software
 
@@ -76,18 +79,18 @@ Docker application directory:
 
 ## NFS Storage
 
-The Zyxel NAS326 at `192.168.12.168` provides NFS storage to this VM.
+The Zyxel NAS326 provides NFS storage to this VM.
 
 Current persistent mount:
 
 ```text
-192.168.12.168:/i-data/cfb9d897/nfs/homelab -> /mnt/nas
+NAS NFS export: homelab -> /mnt/nas
 ```
 
 The NAS photo share is also mounted for Immich:
 
 ```text
-192.168.12.168:/i-data/cfb9d897/photo -> /mnt/photo-library
+NAS NFS export: photo -> /mnt/photo-library
 ```
 
 The photo mount uses NFSv3 and is exposed to the Immich server container as a read-only bind mount.
@@ -106,10 +109,10 @@ Services:
 Web interface:
 
 ```text
-http://192.168.12.244:2283
+TCP 2283 on the internal network
 ```
 
-The existing Zyxel photo collection is configured as an Immich External Library at:
+The existing NAS photo collection is configured as an Immich External Library at:
 
 ```text
 /mnt/photo-library
@@ -132,3 +135,7 @@ Initial configuration choices:
 - Version Check: enabled
 
 PostgreSQL is currently deployed as part of the Immich Compose stack rather than in a separate LXC. This keeps the application self-contained and avoids unnecessary inter-VM database overhead for the current homelab scale.
+
+## Public Documentation Policy
+
+Actual internal IP addresses, DNS names, MAC addresses, and other environment-specific network identifiers are intentionally omitted from this public repository.
