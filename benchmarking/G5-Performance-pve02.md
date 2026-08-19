@@ -1,8 +1,8 @@
 # G5 Performance: pve02
 
-Performance baseline for the second HP EliteDesk 800 G5 Mini running Proxmox VE.
+Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE on `pve02`.
 
-This document is intentionally separate from `G5-Performance.md`, which contains the original `pve` baseline. The two systems are similar G5 Mini platforms but use different CPUs and storage devices.
+This document is the companion to `G5-Performance-pve01.md`. The two systems are similar G5 Mini platforms but use different CPUs and storage devices.
 
 ## System
 
@@ -25,26 +25,50 @@ This document is intentionally separate from `G5-Performance.md`, which contains
 | Network            | 1 Gb Ethernet |
 | Proxmox Bridge     | `vmbr0` |
 
-`pve02` is the second physical node in the two-node `nexus` Proxmox cluster. It uses the standard 65 W-class i5-9500 rather than the 35 W-class i5-9500T installed in `pve`.
+`pve02` is the second physical node in the two-node `nexus` Proxmox cluster. It uses the standard 65 W-class Intel Core i5-9500 rather than the 35 W-class i5-9500T installed in `pve01`.
 
 The system currently contains a single 16 GB memory module. A future second 16 GB module would increase capacity to 32 GB and enable dual-channel operation.
 
-## Network Benchmark
+## Network Configuration
 
-The physical network interface is connected through the NETGEAR GS108E managed switch.
+The G5 is connected to the homelab network using its physical Ethernet interface and the NETGEAR GS108E managed switch.
 
-The network was tested with `iperf3` between `pve02` (`192.168.12.248`) and `pve` (`192.168.12.247`).
+| Property   | Value |
+| ---------- | ----- |
+| Proxmox Bridge | `vmbr0` |
+| IP Address | `192.168.12.248/24` |
+| Link Speed | 1000 Mb/s |
+| Duplex | Full |
 
-### Results
+The physical network path is:
+
+```text
+pve02
+ │
+ │ 1 Gb Ethernet
+ ▼
+NETGEAR GS108E
+ │
+ ├── pve01
+ ├── Zyxel NAS
+ ├── Proxmox guests
+ └── Other network devices
+```
+
+A 1 Gb Ethernet connection provides a theoretical maximum of 125 MB/s before protocol and filesystem overhead.
+
+### Network Benchmark
+
+Network throughput was measured with `iperf3` between `pve02` (`192.168.12.248`) and `pve01` (`192.168.12.247`).
 
 | Direction | Throughput | Retransmits |
 | --------- | ---------: | ----------: |
-| `pve02` → `pve` | **935 Mbits/sec** | 0 |
-| `pve` → `pve02` | **934 Mbits/sec** | 0 |
+| `pve02` → `pve01` | **935 Mbits/sec** | 0 |
+| `pve01` → `pve02` | **934 Mbits/sec** | 0 |
 
 The measured throughput is approximately 93.4% of the nominal 1 Gb Ethernet line rate and is consistent with a healthy 1 GbE connection after protocol overhead.
 
-The network is therefore not showing an obvious performance problem between the two Proxmox nodes.
+The network path between the two Proxmox nodes is therefore not showing an obvious performance limitation.
 
 ## Storage Configuration
 
@@ -111,36 +135,50 @@ These are controller-supported power-state limits, not measurements of whole-sys
 
 ## CPU Benchmark
 
-CPU performance was measured from the `lab-core01` VM after it was migrated to `pve02`.
+### Host CPU Baseline
 
-The VM was configured with 4 vCPUs. The benchmark therefore measures the practical CPU performance available to the workload through the Proxmox/QEMU virtualization stack rather than a bare-metal CPU score.
+CPU performance was measured using `sysbench` directly on the Proxmox host.
 
-### Method
+Parameters:
 
 ```text
-Benchmark: sysbench CPU
+Benchmark: CPU
 Prime limit: 10,000
 Duration: 60 seconds
-Threads: 1 and 4
 ```
 
 ### Results
 
 | Threads | Events/sec | Average Latency |
 | ------: | ----------: | --------------: |
+| 1 | **1,438.38** | 0.70 ms |
+| 4 | **5,543.02** | 0.72 ms |
+
+These results establish the current host CPU baseline for `pve02`.
+
+### lab-core01 Workload CPU Benchmark
+
+CPU performance was also measured from the `lab-core01` VM after it was migrated to `pve02`.
+
+The VM was configured with 4 vCPUs. These results measure the practical CPU performance available to the workload through the Proxmox/QEMU virtualization stack rather than a bare-metal CPU score.
+
+| Threads | Events/sec | Average Latency |
+| ------: | ----------: | --------------: |
 | 1 | **1,436.78** | 0.70 ms |
 | 4 | **5,559.86** | 0.72 ms |
 
-These results are the current workload-placement baseline for `lab-core01` on `pve02`.
-
 ## Memory Benchmark
 
-The host contains a single 16 GB DDR4 module. Memory performance was measured from `lab-core01` using the same benchmark parameters used during the workload-placement comparison.
+The host contains a single 16 GB DDR4 module.
 
-### Method
+### Host Memory Baseline
+
+Memory performance was measured using `sysbench` directly on the Proxmox host.
+
+Parameters:
 
 ```text
-Benchmark: sysbench memory
+Benchmark: memory
 Block size: 1 MiB
 Total transfer: 10 GiB
 Threads: 1
@@ -151,10 +189,42 @@ Scope: global
 
 | Operation | Throughput |
 | --------- | ---------: |
+| Read | **29,606.82 MiB/sec** |
+| Write | **25,190.33 MiB/sec** |
+
+These results establish the current host memory baseline for `pve02`.
+
+### lab-core01 Workload Memory Benchmark
+
+Memory performance was measured from `lab-core01` using the same benchmark parameters used during the workload-placement comparison.
+
+| Operation | Throughput |
+| --------- | ---------: |
 | Read | **29,181.12 MiB/sec** |
 | Write | **25,108.70 MiB/sec** |
 
-The results establish the current single-module memory baseline. A future 32 GB dual-channel configuration should be tested using the same parameters to measure the effect of the second DIMM.
+The results establish the current single-module memory baseline available to the VM workload. A future 32 GB dual-channel configuration should be tested using the same parameters to measure the effect of the second DIMM.
+
+## lab-core01 Workload Placement Benchmark
+
+The primary reason for benchmarking `pve02` was to determine whether `lab-core01` was better suited to the second G5 system.
+
+The same VM was tested on both nodes using the same 4 vCPU and 12 GB RAM configuration.
+
+### Controlled Results
+
+| Test | `lab-core01` on `pve01` | `lab-core01` on `pve02` | Change |
+| ---- | ----------------------: | -----------------------: | -----: |
+| CPU 1T | 1,120.76 events/s | **1,436.78 events/s** | **+28.2%** |
+| CPU 4T | 4,427.28 events/s | **5,559.86 events/s** | **+25.6%** |
+| Memory read | 23,835.9 MiB/s | **29,181.1 MiB/s** | **+22.4%** |
+| Memory write | 20,334.1 MiB/s | **25,108.7 MiB/s** | **+23.5%** |
+| 4K random read | 232K IOPS | **300K IOPS** | **+29.3%** |
+| 4K random write | 222K IOPS | **286K IOPS** | **+29.0%** |
+
+The storage values in this table are the controlled cache-cleared VM filesystem tests, not the raw NVMe test or the LVM-thin test-volume results.
+
+The comparison showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random I/O. `lab-core01` was therefore migrated to `pve02` and remains there as its preferred placement.
 
 ## NVMe Benchmark
 
@@ -213,27 +283,6 @@ The random-read test completed approximately 13.0 million I/O operations during 
 
 These results measure the Proxmox LVM-thin storage path rather than the raw NAND media alone and should be interpreted accordingly.
 
-## lab-core01 Workload Placement Benchmark
-
-The primary reason for benchmarking `pve02` was to determine whether `lab-core01` was better suited to the second G5 system.
-
-The same VM was tested on both nodes using the same 4 vCPU and 12 GB RAM configuration.
-
-### Controlled Results
-
-| Test | `lab-core01` on `pve` | `lab-core01` on `pve02` | Change |
-| ---- | --------------------: | -----------------------: | -----: |
-| CPU 1T | 1,120.76 events/s | **1,436.78 events/s** | **+28.2%** |
-| CPU 4T | 4,427.28 events/s | **5,559.86 events/s** | **+25.6%** |
-| Memory read | 23,835.9 MiB/s | **29,181.1 MiB/s** | **+22.4%** |
-| Memory write | 20,334.1 MiB/s | **25,108.7 MiB/s** | **+23.5%** |
-| 4K random read | 232K IOPS | **300K IOPS** | **+29.3%** |
-| 4K random write | 222K IOPS | **286K IOPS** | **+29.0%** |
-
-The storage values in this table are the controlled cache-cleared VM filesystem tests, not the raw NVMe test or the LVM-thin test-volume results.
-
-The comparison showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random I/O. `lab-core01` was therefore migrated to `pve02` and remains there as its preferred placement.
-
 ## Power Measurement
 
 Whole-system power consumption has **not** been measured.
@@ -244,7 +293,7 @@ Power efficiency remains a future measurement. The goal is to compare the two G5
 
 ## Future Tests
 
-The following tests remain useful for completing the pve/pve02 comparison:
+The following tests remain useful for completing the pve01/pve02 comparison:
 
 * Whole-system idle power measurement
 * Whole-system load power measurement
@@ -254,3 +303,9 @@ The following tests remain useful for completing the pve/pve02 comparison:
 * 1 TB Optimus 5001 NVMe benchmark after installation
 
 The existing benchmark parameters should be reused wherever practical so future results remain directly comparable.
+
+## Baseline Date
+
+**August 18, 2026**
+
+**Last updated:** August 19, 2026
