@@ -58,7 +58,7 @@
 * Moved Immich managed media storage from the local VM disk to the NAS while retaining thumbnails and PostgreSQL on local NVMe.
 * Configured Immich managed storage at `/mnt/immich-photo/Immich` backed by the NAS `photo` NFS export.
 * Retained the existing NAS photo collection as a separate read-only Immich External Library.
-* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}/{{dd}}/{{filename}}`.
+* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`.
 * Successfully migrated and verified a test HEIC asset into the date-based storage hierarchy.
 * Validated iOS mobile photo upload from the phone through Immich to the NAS.
 * Began the full iOS photo backup containing more than 30,000 files.
