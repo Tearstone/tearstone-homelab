@@ -14,19 +14,26 @@
 
 ### Networking and TLS
 
-* Moved authoritative DNS for `rsanderlin.com` from DreamHost to Cloudflare while retaining the existing DreamHost web origin during the staged migration.
+* Moved authoritative DNS for `rsanderlin.com` from DreamHost to Cloudflare.
 * Configured the web records through the Cloudflare proxy while leaving FTP, MySQL, and SSH records DNS-only.
 * Created and installed a Cloudflare Origin Certificate on `prod-web01`.
 * Configured Nginx for HTTPS on TCP 443 and verified the migrated WordPress site locally over HTTPS.
 * Confirmed the local origin returns `HTTP/1.1 200 OK` and serves the expected WordPress HTML.
-* Left Cloudflare SSL/TLS in `Full` mode pending completion of the secure tunnel architecture.
-* Confirmed the home ISP public IP will not be used as the permanent public DNS target; the final architecture will use a secure outbound Cloudflare tunnel to `prod-web01`.
+* Installed `cloudflared` 2026.8.2 on `prod-web01` and established a healthy outbound Cloudflare Tunnel.
+* Published `rsanderlin.com` through the tunnel using `https://localhost:443` as the origin service.
+* Configured the tunnel origin server name as `rsanderlin.com` so the Cloudflare Origin Certificate validates correctly.
+* Removed the apex web A record pointing to the former DreamHost origin and moved `rsanderlin.com` to the tunnel-backed Cloudflare configuration.
+* Verified the public apex site through Cloudflare with HTTP/2 `200` and the expected WordPress page title.
+* Confirmed the home ISP public IP is not used as the permanent public web origin; the public apex site is now served through the outbound Cloudflare Tunnel.
+* Cloudflare SSL/TLS remains in `Full` mode pending final validation and the later move to `Full (strict)`.
 
 ### Migration Status
 
-* The public website remains on DreamHost while the new origin is validated.
-* The migration is intentionally paused before the final web cutover.
-* Next step is to build and validate the secure Cloudflare tunnel, then move Cloudflare to `Full (strict)` and complete the web origin cutover.
+* The apex `rsanderlin.com` website is now operational through Cloudflare Tunnel and `prod-web01`.
+* `www.rsanderlin.com` has not yet been moved to the tunnel.
+* FTP, MySQL, and SSH remain DNS-only and still point toward the legacy hosting environment.
+* The migration is intentionally paused at this stable milestone before moving additional hostnames or retiring the DreamHost services.
+* Next steps are to observe the apex site, migrate `www`, validate WordPress functionality, move Cloudflare to `Full (strict)`, and then determine the retirement plan for the remaining DreamHost services.
 
 ## 2026-08-19
 
@@ -51,7 +58,7 @@
 * Moved Immich managed media storage from the local VM disk to the NAS while retaining thumbnails and PostgreSQL on local NVMe.
 * Configured Immich managed storage at `/mnt/immich-photo/Immich` backed by the NAS `photo` NFS export.
 * Retained the existing NAS photo collection as a separate read-only Immich External Library.
-* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`.
+* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}/{{dd}}/{{filename}}`.
 * Successfully migrated and verified a test HEIC asset into the date-based storage hierarchy.
 * Validated iOS mobile photo upload from the phone through Immich to the NAS.
 * Began the full iOS photo backup containing more than 30,000 files.
