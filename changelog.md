@@ -12,7 +12,7 @@
 * Temporarily disabled Crayon Syntax Highlighter, DreamHost Panel Login, and WP Super Cache by renaming their plugin paths rather than modifying the WordPress database.
 * Documented Crayon Syntax Highlighter as incompatible with the PHP 8.4 environment after it generated regular-expression warnings during testing.
 
-### Networking and TLS
+### `rsanderlin.com` Networking and TLS
 
 * Moved authoritative DNS for `rsanderlin.com` from DreamHost to Cloudflare.
 * Configured the web records through the Cloudflare proxy while leaving the remaining legacy service record DNS-only.
@@ -29,16 +29,53 @@
 * Verified `www.rsanderlin.com` through Cloudflare and confirmed WordPress redirects it to the canonical `https://rsanderlin.com/` URL.
 * Confirmed the home ISP public IP is not used as the permanent public web origin; the public web application is served through the outbound Cloudflare Tunnel.
 * Changed Cloudflare SSL/TLS from `Full` to **Full (strict)** and verified the public site continued to return HTTP/2 `200`.
+* Completed browser-level validation of the migrated site.
 
-### Migration Status
+### `rsanderlin.com` Migration Status
 
-* The `rsanderlin.com` website is now operational through Cloudflare Tunnel and `prod-web01`.
+* The `rsanderlin.com` website is operational through Cloudflare Tunnel and `prod-web01`.
 * Both `rsanderlin.com` and `www.rsanderlin.com` are published through the same tunnel.
 * WordPress redirects `www.rsanderlin.com` to the canonical `rsanderlin.com` hostname.
 * Cloudflare validates the encrypted origin connection using the installed Cloudflare Origin Certificate under **Full (strict)** mode.
 * `mysql.rsanderlin.com` remains DNS-only and associated with the legacy hosting environment pending a separate retirement decision.
 * The `rsanderlin.com` web routing migration is complete. Remaining work is application validation and retirement of legacy services.
-* The established Cloudflare Tunnel and Full (strict) pattern will be reused when beginning migration of `rvtravelbug.com`.
+
+### `rvtravelbug.com` Migration
+
+* Created a complete DreamHost filesystem archive before migration: approximately 502 MB of WordPress files compressed to approximately 407 MB.
+* Created and verified a complete WordPress database dump from the DreamHost-hosted database; the dump is approximately 7.8 MB.
+* Transferred the filesystem archive and database dump to `prod-web01`.
+* Created dedicated MariaDB database `wordpress_rvtravelbug` and database user `wp_rvtravelbug`.
+* Imported the WordPress database; 12 tables are present after import.
+* Created dedicated Linux user and group `wp-rvtravelbug` with `/usr/sbin/nologin` and `/srv/www/rvtravelbug.com` as the home directory.
+* Created `/srv/www/rvtravelbug.com/public` as the WordPress document root and assigned it to the dedicated site account.
+* Updated `wp-config.php` for the local MariaDB database and generated new WordPress authentication salts.
+* Created a dedicated PHP-FPM pool and socket for `rvtravelbug.com`.
+* Configured Nginx for HTTP and HTTPS using a dedicated virtual host.
+* Generated and installed a Cloudflare Origin Certificate covering `rvtravelbug.com` and `*.rvtravelbug.com`.
+* Validated the local HTTPS origin and confirmed the expected WordPress title: `RV Travel Bug – Full Time RV Family Travel Blog`.
+* Added `rvtravelbug.com` to Cloudflare and changed authoritative DNS from DreamHost to Cloudflare.
+* Added `rvtravelbug.com` and `www.rvtravelbug.com` to the existing `prod-web01` Cloudflare Tunnel.
+* Configured both tunnel routes to use `https://localhost:443` with `originServerName` set to `rvtravelbug.com`.
+* Replaced the public DreamHost A records with Cloudflare Tunnel-backed DNS records.
+* Verified the public apex site through Cloudflare with HTTP/2 `200`.
+* Verified `www.rvtravelbug.com` redirects to the canonical `https://rvtravelbug.com/` URL.
+* Changed Cloudflare SSL/TLS to **Full (strict)** and verified both public hostnames continue to function correctly.
+* Completed browser-level validation of the homepage, WordPress administration, media library, and older posts with images.
+
+### `rvtravelbug.com` Migration Status
+
+* The `rvtravelbug.com` website is now operational through Cloudflare Tunnel and `prod-web01`.
+* Both `rvtravelbug.com` and `www.rvtravelbug.com` are published through the shared tunnel.
+* WordPress redirects `www.rvtravelbug.com` to the canonical `rvtravelbug.com` hostname.
+* Cloudflare validates the encrypted origin connection using the installed Cloudflare Origin Certificate under **Full (strict)** mode.
+* The web application no longer depends on the former DreamHost web IP.
+* Remaining DreamHost database/service records require a separate retirement decision.
+
+### Next Migration
+
+* The Cloudflare Tunnel and Full (strict) migration pattern is now established for subsequent public web applications.
+* `rvtravelbug.com` and `rsanderlin.com` are the reference implementations for the next domain migration.
 
 ## 2026-08-19
 
