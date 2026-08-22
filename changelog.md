@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-22
+
+### Applications
+
+* Began migration of `rsanderlin.com` WordPress from DreamHost shared hosting to the home lab `prod-web01` VM.
+* Provisioned the WordPress application stack on Debian 13 with Nginx, PHP 8.4, PHP-FPM, and MariaDB 11.8.
+* Migrated the WordPress filesystem and imported the existing database; the imported database contains 40 tables.
+* Updated the WordPress configuration for the new local MariaDB backend and generated new authentication salts.
+* Removed the obsolete DreamHost WP-Cache path from the WordPress configuration.
+* Temporarily disabled Crayon Syntax Highlighter, DreamHost Panel Login, and WP Super Cache by renaming their plugin paths rather than modifying the WordPress database.
+* Documented Crayon Syntax Highlighter as incompatible with the PHP 8.4 environment after it generated regular-expression warnings during testing.
+
+### Networking and TLS
+
+* Moved authoritative DNS for `rsanderlin.com` from DreamHost to Cloudflare while retaining the existing DreamHost web origin during the staged migration.
+* Configured the web records through the Cloudflare proxy while leaving FTP, MySQL, and SSH records DNS-only.
+* Created and installed a Cloudflare Origin Certificate on `prod-web01`.
+* Configured Nginx for HTTPS on TCP 443 and verified the migrated WordPress site locally over HTTPS.
+* Confirmed the local origin returns `HTTP/1.1 200 OK` and serves the expected WordPress HTML.
+* Left Cloudflare SSL/TLS in `Full` mode pending completion of the secure tunnel architecture.
+* Confirmed the home ISP public IP will not be used as the permanent public DNS target; the final architecture will use a secure outbound Cloudflare tunnel to `prod-web01`.
+
+### Migration Status
+
+* The public website remains on DreamHost while the new origin is validated.
+* The migration is intentionally paused before the final web cutover.
+* Next step is to build and validate the secure Cloudflare tunnel, then move Cloudflare to `Full (strict)` and complete the web origin cutover.
+
 ## 2026-08-19
 
 ### Benchmarking
