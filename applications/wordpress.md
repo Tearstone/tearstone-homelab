@@ -8,15 +8,15 @@ The migration is being performed in stages so the existing public site remains a
 
 ## Target Architecture
 
-The planned production path is:
+The current production path for the apex domain is:
 
 ```text
 Internet
   |
   v
-Cloudflare
+Cloudflare DNS / Proxy
   |
-  | Secure outbound tunnel
+  | Cloudflare Tunnel (outbound from prod-web01)
   v
 prod-web01
   |
@@ -26,7 +26,7 @@ prod-web01
   +-- WordPress
 ```
 
-The home ISP public IP will not be used as the application's permanent public DNS target. Cloudflare will provide the public DNS and proxy layer, while a secure outbound tunnel will provide connectivity to `prod-web01`.
+The home ISP public IP is not used as the application's public DNS target. Cloudflare provides the public DNS and proxy layer, while a secure outbound tunnel provides connectivity to `prod-web01`.
 
 ## Migration Status
 
@@ -47,19 +47,66 @@ As of 2026-08-22, the following work is complete:
 * Configured Nginx for HTTP and HTTPS.
 * Installed a Cloudflare Origin Certificate on `prod-web01`.
 * Verified the migrated WordPress site locally over HTTPS with Nginx, PHP-FPM, and MariaDB functioning together.
+* Installed `cloudflared` 2026.8.2 and established a healthy Cloudflare Tunnel from `prod-web01`.
+* Published `rsanderlin.com` through the tunnel using `https://localhost:443` as the origin service.
+* Configured the tunnel origin server name as `rsanderlin.com` so the Cloudflare Origin Certificate validates correctly.
+* Removed the public apex A record pointing to the former DreamHost web origin and replaced it with the tunnel-backed Cloudflare configuration.
+* Verified the public apex site through Cloudflare with HTTP/2 `200` and the expected WordPress page title.
 
 ## DNS and Cloudflare
 
 The domain is registered with Namecheap.
 
-Cloudflare is now authoritative for the domain. The existing web records remain configured to the former DreamHost origin while the new home lab origin is prepared.
+Cloudflare is now authoritative for the domain.
+
+Current web routing for the apex domain:
+
+```text
+rsanderlin.com
+    |
+    v
+Cloudflare proxied DNS
+    |
+    v
+Cloudflare Tunnel
+    |
+    v
+prod-web01:443
+```
+
+The tunnel publishes the apex hostname to the local Nginx HTTPS service. Cloudflare DNS uses the tunnel-backed configuration rather than the former DreamHost web IP.
 
 Current Cloudflare proxy behavior:
 
-* Web records are proxied through Cloudflare.
-* FTP, MySQL, and SSH records remain DNS-only.
+* `rsanderlin.com` is proxied through Cloudflare and is routed through the `prod-web01` tunnel.
+* `www.rsanderlin.com` has not yet been moved to the tunnel.
+* FTP, MySQL, and SSH records remain DNS-only and are still associated with the legacy hosting environment.
 
-Cloudflare SSL/TLS is currently set to **Full**. The planned final mode is **Full (strict)** after the secure tunnel and new origin are fully validated.
+Cloudflare SSL/TLS is currently set to **Full**. The final **Full (strict)** configuration remains a subsequent migration step after the tunnel-backed apex site has been observed and validated.
+
+## Cloudflare Tunnel
+
+The tunnel is named `prod-web01` and is managed remotely through Cloudflare.
+
+The connector runs as a systemd service on `prod-web01`:
+
+```text
+cloudflared.service
+```
+
+The service is enabled and has established multiple QUIC connections to Cloudflare. The tunnel reports **Healthy** in the Cloudflare dashboard.
+
+The published application route is:
+
+```text
+Hostname: rsanderlin.com
+Service: https://localhost:443
+Origin Server Name: rsanderlin.com
+```
+
+The origin server name is required because the Cloudflare Origin Certificate is valid for `rsanderlin.com` and `*.rsanderlin.com`, not `localhost`.
+
+The tunnel token and other private credentials are not committed to this repository.
 
 ## Origin Configuration
 
@@ -101,22 +148,31 @@ The remaining active plugins were left untouched during the initial migration va
 
 ## Validation
 
-The origin was validated locally with HTTPS before any public web cutover:
+The origin was validated locally with HTTPS before the public web cutover:
 
 * Nginx configuration test passed.
 * Nginx was listening on TCP 80 and 443.
 * `curl` returned `HTTP/1.1 200 OK` when connecting to the local HTTPS virtual host with `rsanderlin.com` as the hostname.
 * The response contained the expected WordPress site HTML and title.
 
+The tunnel-backed public site was subsequently validated:
+
+* Cloudflare DNS resolves `rsanderlin.com` to Cloudflare anycast addresses rather than the former DreamHost web IP.
+* The Cloudflare Tunnel reports **Healthy**.
+* `curl -I https://rsanderlin.com/` returns `HTTP/2 200` with `server: cloudflare`.
+* The response contains the expected WordPress page title: `Russ Sanderlin – Onwards and Upwards`.
+* Browser access to `https://rsanderlin.com` successfully loads the migrated site.
+* The tunnel logs no longer report the previous origin certificate hostname mismatch after setting `originServerName` to `rsanderlin.com`.
+
 ## Next Steps
 
-The migration is intentionally paused before the final web cutover.
+The apex web migration is now operational through Cloudflare Tunnel. The migration remains staged rather than fully complete.
 
 Next work:
 
-1. Build and validate the secure Cloudflare tunnel to `prod-web01`.
-2. Verify Cloudflare-to-origin connectivity through the tunnel.
+1. Observe and validate the apex site through the tunnel.
+2. Move `www.rsanderlin.com` to the tunnel and validate redirects and HTTPS behavior.
 3. Change Cloudflare SSL/TLS from Full to Full (strict).
-4. Change the proxied web DNS records from the DreamHost origin to the new tunnel-backed origin.
-5. Validate the public site.
-6. Retire the DreamHost web hosting after the new site is confirmed stable.
+4. Validate WordPress administration, uploads, background tasks, and remaining application functionality through the tunnel.
+5. Determine the future role of the legacy FTP, MySQL, and SSH records.
+6. Retire the DreamHost web hosting after the migrated site is confirmed stable.
