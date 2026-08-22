@@ -15,25 +15,30 @@
 ### Networking and TLS
 
 * Moved authoritative DNS for `rsanderlin.com` from DreamHost to Cloudflare.
-* Configured the web records through the Cloudflare proxy while leaving FTP, MySQL, and SSH records DNS-only.
+* Configured the web records through the Cloudflare proxy while leaving the remaining legacy service record DNS-only.
 * Created and installed a Cloudflare Origin Certificate on `prod-web01`.
 * Configured Nginx for HTTPS on TCP 443 and verified the migrated WordPress site locally over HTTPS.
 * Confirmed the local origin returns `HTTP/1.1 200 OK` and serves the expected WordPress HTML.
 * Installed `cloudflared` 2026.8.2 on `prod-web01` and established a healthy outbound Cloudflare Tunnel.
 * Published `rsanderlin.com` through the tunnel using `https://localhost:443` as the origin service.
-* Configured the tunnel origin server name as `rsanderlin.com` so the Cloudflare Origin Certificate validates correctly.
+* Published `www.rsanderlin.com` through the same tunnel using `https://localhost:443` as the origin service.
+* Configured the tunnel origin server name as `rsanderlin.com` so the Cloudflare Origin Certificate validates correctly for both published application routes.
 * Removed the apex web A record pointing to the former DreamHost origin and moved `rsanderlin.com` to the tunnel-backed Cloudflare configuration.
+* Replaced the former `www` web record with the Cloudflare-managed Tunnel record associated with `prod-web01`.
 * Verified the public apex site through Cloudflare with HTTP/2 `200` and the expected WordPress page title.
-* Confirmed the home ISP public IP is not used as the permanent public web origin; the public apex site is now served through the outbound Cloudflare Tunnel.
-* Cloudflare SSL/TLS remains in `Full` mode pending final validation and the later move to `Full (strict)`.
+* Verified `www.rsanderlin.com` through Cloudflare and confirmed WordPress redirects it to the canonical `https://rsanderlin.com/` URL.
+* Confirmed the home ISP public IP is not used as the permanent public web origin; the public web application is served through the outbound Cloudflare Tunnel.
+* Changed Cloudflare SSL/TLS from `Full` to **Full (strict)** and verified the public site continued to return HTTP/2 `200`.
 
 ### Migration Status
 
-* The apex `rsanderlin.com` website is now operational through Cloudflare Tunnel and `prod-web01`.
-* `www.rsanderlin.com` has not yet been moved to the tunnel.
-* FTP, MySQL, and SSH remain DNS-only and still point toward the legacy hosting environment.
-* The migration is intentionally paused at this stable milestone before moving additional hostnames or retiring the DreamHost services.
-* Next steps are to observe the apex site, migrate `www`, validate WordPress functionality, move Cloudflare to `Full (strict)`, and then determine the retirement plan for the remaining DreamHost services.
+* The `rsanderlin.com` website is now operational through Cloudflare Tunnel and `prod-web01`.
+* Both `rsanderlin.com` and `www.rsanderlin.com` are published through the same tunnel.
+* WordPress redirects `www.rsanderlin.com` to the canonical `rsanderlin.com` hostname.
+* Cloudflare validates the encrypted origin connection using the installed Cloudflare Origin Certificate under **Full (strict)** mode.
+* `mysql.rsanderlin.com` remains DNS-only and associated with the legacy hosting environment pending a separate retirement decision.
+* The `rsanderlin.com` web routing migration is complete. Remaining work is application validation and retirement of legacy services.
+* The established Cloudflare Tunnel and Full (strict) pattern will be reused when beginning migration of `rvtravelbug.com`.
 
 ## 2026-08-19
 
