@@ -32,11 +32,13 @@ curl -X POST http://localhost:9090/-/reload
 
 ## Current Targets
 
-- pve - physical node - Proxmox
+- pve01 - physical node - Proxmox
+- pve02 - physical node - Proxmox
 - infra-prometheus01 - LXC - Debian 13
 - infra-grafana01 - LXC - Debian 13
 - lab-kali01 - VM - Kali Linux
 - lab-core01 - VM - Debian 13
+- prod-web01 - VM - Debian 13
 
 ## Validation
 
@@ -100,7 +102,11 @@ scrape_configs:
     static_configs:
       - targets: ['192.168.x.x:9100']
         labels:
-          name: pve
+          name: pve01
+
+      - targets: ['192.168.x.x:9100'[
+        labels:
+          name: pve02
 
 #
 # Linux Virtual Machines
@@ -115,6 +121,10 @@ scrape_configs:
       - targets: ['192.168.x.x:9100']
         labels:
           name: lab-kali01
+
+      - targets: ['192.168.x.x:9100']
+        labels:
+          name: prod-web01
 
 #
 # Linux Containers (LXC)
