@@ -13,8 +13,8 @@ Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE on `pve
 | CPU Threads | 6 |
 | CPU Base Frequency | 2.2 GHz |
 | CPU Max Turbo | 3.7 GHz |
-| RAM | 16 GB DDR4 |
-| RAM Configuration | 1 × 16 GB SODIMM |
+| RAM | 32 GB DDR4 |
+| RAM Configuration | 2 × 16 GB SODIMM |
 | RAM Speed | 2667 MT/s |
 | RAM Maximum | 32 GB |
 | Storage | Toshiba KXG50ZNV256G NVMe |
@@ -105,9 +105,11 @@ The initial single-thread test performed with guests running produced 1,170.16 e
 
 ## Memory Benchmark
 
-The system currently contains a single 16 GB DDR4-2667 SODIMM.
+The system was upgraded in August 2026 from a single 16 GB DDR4-2667 SODIMM to two 16 GB DDR4-2667 SODIMMs for a total of 32 GB. The modules are installed in Channel A and Channel B.
 
-Parameters:
+### Original 16 GB Baseline
+
+The original baseline used:
 
 ```text
 Benchmark: memory
@@ -117,12 +119,30 @@ Threads: 1
 Scope: global
 ```
 
-| Operation | Throughput |
+| Operation | 16 GB Baseline |
 | --- | ---: |
 | Read | **25,645.48 MiB/sec** |
 | Write | **21,665.73 MiB/sec** |
 
-A future upgrade to 32 GB using two 16 GB modules will provide an opportunity to compare both capacity and memory-channel performance.
+### 32 GB Upgrade Results
+
+The same 1 thread test was repeated after the RAM upgrade using the same parameters.
+
+| Operation | 16 GB Baseline | 32 GB | Change |
+| --- | ---: | ---: | ---: |
+| Read | 25,645.48 MiB/sec | **24,180.55 MiB/sec** | **−5.71%** |
+| Write | 21,665.73 MiB/sec | **21,487.18 MiB/sec** | **−0.82%** |
+
+The single-thread results show no meaningful memory bandwidth improvement from the RAM upgrade. The primary benefit of the upgrade is the increase from 16 GB to 32 GB of available memory and the ability to operate with two populated memory channels.
+
+A 6 thread memory test was also performed after the upgrade using the same 1 MiB block size and 10 GiB total transfer:
+
+| Operation | 32 GB Result |
+| --- | ---: |
+| Read | **106,762.51 MiB/sec** |
+| Write | **78,147.37 MiB/sec** |
+
+The existing 16 GB benchmark documentation does not contain a corresponding 6 thread, 10 GiB memory result, so a percentage improvement for the 6 thread test cannot be calculated from the documented baseline without inventing a value. The 6 thread results above are retained as the new 32 GB multi-thread memory baseline.
 
 ## lab-core01 Workload Placement Benchmark
 
