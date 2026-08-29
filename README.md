@@ -40,7 +40,9 @@ The lab is built as a practical learning environment where new technologies are 
 ### Storage
 
 * Zyxel NAS326
-* Local NVMe storage on both G5 nodes
+* 256 GB system NVMe on each G5 node
+* 1 TB SanDisk Optimus 5100 NVMe on `pve02`
+* Dedicated Proxmox `nvme-lvm` LVM-thin storage on `pve02`
 * NFS shared storage
 * NAS-backed Immich media storage
 
@@ -66,6 +68,7 @@ The lab is built as a practical learning environment where new technologies are 
 
 * Docker
 * Immich
+* WordPress applications on `prod-web01`
 
 ## Documentation
 
@@ -88,6 +91,8 @@ Both HP EliteDesk 800 G5 Mini systems have been benchmarked as Proxmox nodes, an
 
 The current results show `pve02` providing a consistent performance advantage for `lab-core01`, with approximately 22–29% improvement across the tested CPU, memory, and 4K random I/O workloads. `lab-core01` has therefore been migrated to `pve02` as its preferred placement.
 
+The addition of the 1 TB SanDisk Optimus 5100 NVMe to `pve02` established a new dedicated high-performance storage tier. Raw-device fio testing using `io_uring`, queue depth 32, measured approximately 3.4 GiB/s sequential read, 3.2 GiB/s sequential write, 355K 4K random-read IOPS, 102K 4K random-write IOPS, and 63K read / 27K write IOPS in a 70/30 random mixed workload.
+
 Benchmarks cover:
 
 * CPU
@@ -107,13 +112,14 @@ Whole-system power consumption has not yet been measured.
 
 The immediate infrastructure direction is to continue optimizing the two-node G5 Proxmox cluster rather than moving to larger enterprise servers.
 
-Planned work includes:
+Current work includes:
 
-* Install the planned 1 TB Optimus 5001 NVMe in the appropriate G5 node
-* Evaluate a second 16 GB DIMM and 32 GB dual-channel configuration
+* `pve02` now has a dedicated 1 TB SanDisk Optimus 5100 NVMe storage tier exposed to Proxmox as `nvme-lvm`
+* `lab-core01` VM 100's 80 GB system disk has been migrated from `local-lvm` to `nvme-lvm` while the VM remained running
+* Maintain NAS-backed Proxmox backups and verify backup availability
+* Evaluate a second 16 GB DIMM and 32 GB dual-channel configuration where appropriate
 * Measure whole-system idle and load power
 * Continue storage and network performance testing
-* Implement automated Proxmox backups and backup verification
 * Expand monitoring, DNS, TLS, and network services
 * Explore VLANs, segmentation, automation, and additional security infrastructure
 
@@ -127,4 +133,4 @@ Actual addressing and other environment-specific operational details are maintai
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab is now a two-node Proxmox environment with shared NAS storage, containerized applications, centralized monitoring, and an established performance baseline. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
+The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized monitoring, and an established performance baseline. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
