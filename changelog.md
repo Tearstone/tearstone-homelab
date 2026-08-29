@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-08-29
+
+### pve02 Storage Expansion
+
+* Installed a 1 TB SanDisk Optimus 5100 NVMe in `pve02` as a second physical storage device.
+* Verified the drive at approximately 931.5 GiB capacity.
+* Created a GPT partition using the full device and initialized `/dev/nvme0n1p1` as an LVM physical volume.
+* Created the `pve-fast` volume group on the new NVMe.
+* Created a full-capacity `data` LVM-thin pool of approximately 931.3 GiB.
+* Added the thin pool to Proxmox as storage ID `nvme-lvm` with `images,rootdir` content enabled.
+* Verified storage allocation and removal through `pvesm` using a temporary 10 GB test volume.
+* Documented the 512 KiB thin-pool chunk size selected by LVM and the associated provisioning warning for future consideration.
+
+### pve02 NVMe Benchmarking
+
+* Benchmarked the Optimus 5100 before partitioning and deployment using fio 3.39, `io_uring`, direct I/O, queue depth 32, and 30-second time-based tests.
+* Measured sequential read performance of approximately 3,425 MiB/sec with 1 MiB blocks.
+* Measured sequential write performance of approximately 3,216 MiB/sec with 1 MiB blocks.
+* Measured 4K random-read performance of approximately 355.6K IOPS at queue depth 32.
+* Measured 4K random-write performance of approximately 102.4K IOPS at queue depth 32.
+* Measured a 70/30 4K random mixed workload at approximately 63.0K read IOPS and 27.0K write IOPS.
+* Recorded the results as raw-device performance rather than guest VM performance.
+
+### lab-core01 Storage Migration
+
+* Migrated VM 100 `lab-core01`'s 80 GB system disk from `local-lvm` to the new `nvme-lvm` storage tier.
+* Performed the migration online while `lab-core01` remained running.
+* Used Proxmox `qm move_disk` with source-volume deletion enabled only after the mirror completed successfully.
+* Verified the resulting VM configuration points `scsi0` to `nvme-lvm:vm-100-disk-0`.
+* Verified `lab-core01` remained running after migration.
+* Verified the Debian guest continued to see an 80 GB system disk.
+* Verified Docker was operational and all four Immich containers were healthy after migration.
+* Confirmed the original `local-lvm:vm-100-disk-1` volume was removed after successful migration.
+
 ## 2026-08-22
 
 ### Applications
