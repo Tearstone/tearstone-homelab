@@ -21,7 +21,7 @@ Intel I219-LM 1 Gb Ethernet
 Future Upgrades
 
 - 32 GB RAM using a second 16 GB DIMM
-- 1 TB Optimus 5001 NVMe as an additional drive
+- Additional storage if required
 
 ### HP EliteDesk 800 G5 Mini — pve02
 
@@ -35,7 +35,8 @@ Memory
 2 × 8 GB
 
 Storage  
-256 GB WDC/SanDisk PC SN730 NVMe
+256 GB WDC/SanDisk PC SN730 NVMe  
+1 TB SanDisk Optimus 5100 NVMe
 
 Network  
 Intel I219-LM 1 Gb Ethernet
@@ -48,6 +49,8 @@ Intel UHD Graphics 630
 
 Proxmox Storage Layout
 
+System NVMe:
+
 ```text
 238.5 GiB NVMe
 └── LVM
@@ -56,7 +59,21 @@ Proxmox Storage Layout
     └── pve-data      ~197.4 GB LVM-thin
 ```
 
-The installation intentionally reserves approximately 16 GB of free LVM space for future flexibility.
+Approximately 16 GB of the system NVMe volume group remains free for future flexibility.
+
+Additional NVMe:
+
+```text
+931.5 GiB SanDisk Optimus 5100
+└── GPT
+    └── nvme0n1p1     931.5 GiB Linux LVM
+        └── pve-fast VG
+            └── data  ~931.3 GB LVM-thin
+```
+
+The additional NVMe is presented to Proxmox through the `nvme-lvm` storage definition. It is intended as the high-performance VM storage tier while the smaller system NVMe continues to provide the Proxmox operating system and existing `local-lvm` storage.
+
+The 1 TB NVMe was benchmarked before partitioning and deployment. The raw-device results are documented in the pve02 benchmark record.
 
 ## Proxmox Cluster
 
@@ -88,6 +105,8 @@ The same sysbench and fio workloads were run on both hosts. The final storage co
 The preliminary pve02 storage run produced approximately 462K read IOPS and 455K write IOPS, but those results were not retained as the official comparison because a subsequent cache-cleared test produced approximately 300K/286K IOPS. The cache-cleared results are the authoritative A/B measurements.
 
 The results show that `pve02` is consistently faster for the tested `lab-core01` workload across CPU, memory bandwidth, and random storage I/O. `lab-core01` was therefore migrated to `pve02` and will remain there as the preferred host.
+
+The VM's 80 GB system disk now resides on the dedicated `nvme-lvm` storage tier provided by the 1 TB Optimus 5100. The migration was performed online with `qm move_disk` and the source volume was removed only after the mirror completed successfully.
 
 Power consumption has not yet been measured because a suitable power meter is not currently available. The low-power objective remains a design consideration for future measurement.
 
