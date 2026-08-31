@@ -8,7 +8,7 @@ Performance baselines and benchmarks for the homelab infrastructure.
 | ------ | ---- | ------------- |
 | `pve01` | HP EliteDesk 800 G5 Mini / Proxmox VE | [G5 Performance: pve01](G5-Performance-pve01.md) |
 | `pve02` | HP EliteDesk 800 G5 Mini / Proxmox VE | [G5 Performance: pve02](G5-Performance-pve02.md) |
-| Zyxel NAS326 | Shared NFS storage | [G5 Performance: pve01](G5-Performance-pve01.md#nas--nfs-benchmark) |
+| Zyxel NAS326 | Shared NFS storage | Documented within the node network benchmarks |
 | NETGEAR GS108E | Managed network switch | Documented within the node network benchmarks |
 
 ## Benchmark Status
