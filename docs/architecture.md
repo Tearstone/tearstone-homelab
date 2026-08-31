@@ -20,9 +20,15 @@ graph TD
             direction LR
             Kali["lab-kali01\nKali Linux"]
             Qualys["lab-qualys01\nQualys Scanner"]
+            Core["lab-core01\nDebian 13 / Docker"]
+            Web["prod-web01\nDebian 13 / Web"]
+        end
+
+        subgraph Services["Infrastructure Services"]
+            direction LR
             Grafana["infra-grafana01\nGrafana"]
             Prometheus["infra-prometheus01\nPrometheus"]
-            Core["lab-core01\nDebian 13 / Docker"]
+            Homepage["infra-homepage01\nHomepage"]
         end
 
         PVE --> Kali
@@ -30,6 +36,8 @@ graph TD
         PVE --> Grafana
         PVE --> Prometheus
         PVE02 --> Core
+        PVE02 --> Web
+        PVE --> Homepage
     end
 
     Switch --> PVE
@@ -39,40 +47,61 @@ graph TD
     NAS -->|"NFSv3: photo"| Core
     Core -->|"read-only bind mount"| External["Immich External Library"]
     Core -->|"read-write NFS-backed storage"| Immich["Immich Managed Storage"]
+
+    Homepage -->|"Proxmox API: read-only"| PVE
+    Homepage -->|"Dashboard links / widgets"| Grafana
+    Homepage -->|"Dashboard links / widgets"| Prometheus
+    Homepage -->|"Dashboard links"| Core
 ```
 
-The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems.
+The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. A dedicated Debian 13 LXC, `infra-homepage01`, provides the Homepage dashboard used as the primary navigation and operational landing page for lab services.
 
 ### Proxmox Nodes
 
 | Node | CPU | RAM | Local Storage |
 | ---- | --- | --- | ------------- |
-| `pve01` | Intel Core i5-9500T, 6C/6T | 16 GB | 256 GB NVMe |
-| `pve02` | Intel Core i5-9500, 6C/6T | 16 GB | 256 GB NVMe |
+| `pve01` | Intel Core i5-9500T, 6C/6T | 32 GB | 256 GB NVMe |
+| `pve02` | Intel Core i5-9500, 6C/6T | 16 GB | 256 GB NVMe + 1 TB NVMe |
 
 Both nodes run Proxmox VE 9.2.2 and are currently quorate members of the `nexus` cluster.
 
 The nodes are intentionally compact and low-power compared with traditional enterprise servers. The first node uses the 35 W-class i5-9500T, while the second uses the standard i5-9500 to provide an opportunity to compare performance and power characteristics.
 
-`pve02` was installed with a deliberately lean root allocation and approximately 197 GB of local LVM-thin data storage. The first node's storage expansion is planned around a 1 TB Optimus 5001 NVMe as an additional drive; that drive has not yet been purchased or installed.
+`pve02` was installed with a deliberately lean root allocation and approximately 197 GB of local LVM-thin data storage. A second 1 TB SanDisk Optimus 5100 NVMe was subsequently added and exposed to Proxmox as the `nvme-lvm` storage tier.
 
-The planned RAM expansion is a second 16 GB DDR4 DIMM for `pve01`, taking it from 16 GB single-module memory to 32 GB in a dual-channel configuration. This upgrade is intended to increase node capacity rather than address an immediate memory shortage.
+`pve01` was upgraded from 16 GB to 32 GB using a second 16 GB DDR4 SODIMM, resulting in a 2 × 16 GB dual-channel configuration. The post-upgrade memory results are now the current host baseline.
 
-The Zyxel NAS326 provides network storage using NFS. Shared storage architecture will be finalized as the local NVMe capacity of both Proxmox nodes evolves.
+The Zyxel NAS326 provides network storage using NFS. The NAS remains an important shared storage tier for application data, backups, and Immich media.
 
-`lab-core01` is a dedicated Docker application host and currently runs Immich and other home lab application workloads. It has been migrated from `pve01` to `pve02` following a controlled workload placement benchmark.
+### Workload Placement
 
-The Zyxel NAS326 provides an NFS export named `homelab`, currently available to `lab-core01`. A second NFS export provides the existing NAS `photo` directory to `lab-core01` for Immich.
+`lab-core01` is a dedicated Docker application host and currently runs Immich and other home lab application workloads. It was migrated from `pve01` to `pve02` following a controlled workload placement benchmark. Its 80 GB system disk now resides on the `nvme-lvm` storage tier on `pve02`.
 
-Immich runs as a Docker Compose application on `lab-core01`. Its PostgreSQL, Redis/Valkey, and Machine Learning dependencies are containerized alongside the Immich server.
+`prod-web01` is a Debian 13 VM used for self-hosted web applications and related Cloudflare Tunnel workloads.
 
-The existing NAS photo collection is presented to Immich as a read-only External Library at `/mnt/photo-library`. This preserves the existing NAS filesystem and SMB access for the established photo collection.
-
-Immich managed storage is also hosted on the NAS, mounted on `lab-core01` at `/mnt/immich-photo`. Phone uploads, Immich originals, encoded video, backups, and profile data are stored on the NAS. Immich thumbnails remain on the local NVMe storage at `/opt/immich/library/thumbs` to minimize latency during web and mobile photo browsing. PostgreSQL remains on the local NVMe storage as well.
-
-The Immich managed library uses a human-readable year/date hierarchy, while the existing external photo collection remains independent and is not reorganized by Immich.
+The existing NAS photo collection is presented to Immich as a read-only External Library. Immich managed storage is also hosted on the NAS, while Immich thumbnails and PostgreSQL remain on local NVMe storage to preserve low-latency application performance.
 
 Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics.
+
+### Homepage Dashboard
+
+`infra-homepage01` is a dedicated Debian 13 LXC providing the Homepage application. Homepage is installed natively on the LXC rather than through Docker or another nested container runtime.
+
+The current software stack is:
+
+```text
+Debian GNU/Linux 13
+Node.js 22.23.2
+npm 10.9.8
+pnpm 10.34.5
+Homepage 2.1.2
+```
+
+The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation.
+
+Homepage provides navigation to the lab's primary infrastructure and applications, including Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard, and Immich. The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access.
+
+The Proxmox widget displays cluster-wide VM and LXC counts and cluster CPU and memory utilization. Node-specific statistics can be configured separately if required.
 
 ## Cluster
 
@@ -89,7 +118,7 @@ graph LR
     PVE02 -->|NFS| NAS
 ```
 
-The cluster currently provides two-node membership and quorum. It is being used to establish a foundation for workload migration, node comparison, storage planning, and future high-availability experimentation.
+The cluster currently provides two-node membership and quorum. It is being used to establish a foundation for workload migration, node comparison, storage planning, monitoring, and future high-availability experimentation.
 
 ## Workload Placement Testing
 
@@ -153,4 +182,4 @@ graph TD
 
 ## Public Documentation Policy
 
-This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme.
+This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme.
