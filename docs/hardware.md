@@ -10,7 +10,10 @@ Intel Core i5-9500T
 2.2 GHz base / 3.7 GHz turbo
 
 Memory  
-16 GB DDR4
+32 GB DDR4  
+2 × 16 GB SODIMM  
+2667 MT/s  
+Dual-channel configuration
 
 Storage  
 256 GB NVMe
@@ -20,7 +23,6 @@ Intel I219-LM 1 Gb Ethernet
 
 Future Upgrades
 
-- 32 GB RAM using a second 16 GB DIMM
 - Additional storage if required
 
 ### HP EliteDesk 800 G5 Mini — pve02
@@ -55,7 +57,7 @@ System NVMe:
 238.5 GiB NVMe
 └── LVM
     ├── pve-swap        4 GB
-    ├── pve-root       16 GB ext4
+    ├── pve-root        16 GB ext4
     └── pve-data      ~197.4 GB LVM-thin
 ```
 
