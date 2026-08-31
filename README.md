@@ -20,7 +20,7 @@ The lab is built as a practical learning environment where new technologies are 
 
 * HP EliteDesk 800 G5 Mini `pve01`
   * Intel Core i5-9500T
-  * 16 GB RAM
+  * 32 GB RAM
   * Proxmox VE
 * HP EliteDesk 800 G5 Mini `pve02`
   * Intel Core i5-9500
@@ -93,6 +93,8 @@ The current results show `pve02` providing a consistent performance advantage fo
 
 The addition of the 1 TB SanDisk Optimus 5100 NVMe to `pve02` established a new dedicated high-performance storage tier. Raw-device fio testing using `io_uring`, queue depth 32, measured approximately 3.4 GiB/s sequential read, 3.2 GiB/s sequential write, 355K 4K random-read IOPS, 102K 4K random-write IOPS, and 63K read / 27K write IOPS in a 70/30 random mixed workload.
 
+`pve01` was upgraded from 16 GB to 32 GB DDR4 using a second 16 GB SODIMM. The post-upgrade memory benchmark is now the current host baseline, while the original 16 GB results are retained for comparison in the node-specific benchmark record.
+
 Benchmarks cover:
 
 * CPU
@@ -114,10 +116,10 @@ The immediate infrastructure direction is to continue optimizing the two-node G5
 
 Current work includes:
 
-* `pve02` now has a dedicated 1 TB SanDisk Optimus 5100 NVMe storage tier exposed to Proxmox as `nvme-lvm`
+* `pve01` now has 32 GB DDR4 in a 2 × 16 GB dual-channel configuration
+* `pve02` has a dedicated 1 TB SanDisk Optimus 5100 NVMe storage tier exposed to Proxmox as `nvme-lvm`
 * `lab-core01` VM 100's 80 GB system disk has been migrated from `local-lvm` to `nvme-lvm` while the VM remained running
 * Maintain NAS-backed Proxmox backups and verify backup availability
-* Evaluate a second 16 GB DIMM and 32 GB dual-channel configuration where appropriate
 * Measure whole-system idle and load power
 * Continue storage and network performance testing
 * Expand monitoring, DNS, TLS, and network services
