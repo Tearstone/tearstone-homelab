@@ -2,6 +2,28 @@
 
 ## 2026-08-30
 
+### Homepage Dashboard
+
+* Provisioned `infra-homepage01` as a dedicated Debian 13 LXC for the lab Homepage dashboard.
+* Installed Homepage 2.1.2 directly on the LXC from source rather than adding a Docker layer.
+* Installed Node.js 22.23.2 LTS, npm 10.9.8, and pnpm 10.34.5 for the native Homepage build and runtime.
+* Completed the Next.js production build after temporarily increasing the LXC memory allocation from 512 MB to 1 GB.
+* Returned `infra-homepage01` to 512 MB RAM with 512 MB swap after the build completed successfully.
+* Organized the dashboard into Infrastructure, Monitoring, Management, and Applications groups.
+* Added navigation for Proxmox, Zyxel NAS326, NETGEAR GS108Ev4, Grafana, Prometheus, Portainer, AdGuard, and Immich.
+* Added service specific icons and descriptions for the primary lab services.
+
+### Homepage Proxmox Integration
+
+* Created a dedicated `homepage@pam` Proxmox API identity.
+* Created the `api-readonly` group and assigned the `PVEAuditor` role at the cluster root with propagation enabled.
+* Created the `dashboard` API token with privilege separation enabled.
+* Assigned `PVEAuditor` permissions to the API token at the cluster root.
+* Configured the Homepage Proxmox widget to retrieve read only cluster information.
+* Verified the widget reports the complete `nexus` cluster rather than an individual node.
+* Verified the dashboard reports 4/4 VMs, 4/4 LXCs, and cluster CPU and memory utilization.
+* Kept the API token secret and private service addresses out of the public repository documentation.
+
 ### pve01 Memory Upgrade
 
 * Added a second 16 GB DDR4-2667 SODIMM to `pve01`.
@@ -151,7 +173,7 @@
 * Moved Immich managed media storage from the local VM disk to the NAS while retaining thumbnails and PostgreSQL on local NVMe.
 * Configured Immich managed storage at `/mnt/immich-photo/Immich` backed by the NAS `photo` NFS export.
 * Retained the existing NAS photo collection as a separate read-only Immich External Library.
-* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`.
+* Enabled the default Immich Storage Template: `{{y}}/{{y}}-{{MM}}/{{dd}}/{{filename}}`.
 * Successfully migrated and verified a test HEIC asset into the date-based storage hierarchy.
 * Validated iOS mobile photo upload from the phone through Immich to the NAS.
 * Began the full iOS photo backup containing more than 30,000 files.
@@ -215,6 +237,8 @@
 * Restricted NFS access to `lab-core01`.
 
 ## 2026-07-21
+
+### Applications
 
 - lab-core01 configured as Docker application host
 - Installed Docker Engine on lab-core01
