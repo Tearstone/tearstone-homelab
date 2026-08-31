@@ -36,6 +36,7 @@ The lab is built as a practical learning environment where new technologies are 
 * Debian Linux VM
 * Kali Linux VM
 * Qualys Scanner Appliance
+* `infra-homepage01` Debian 13 LXC providing the Homepage dashboard
 
 ### Storage
 
@@ -68,6 +69,7 @@ The lab is built as a practical learning environment where new technologies are 
 
 * Docker
 * Immich
+* Homepage
 * WordPress applications on `prod-web01`
 
 ## Documentation
@@ -135,4 +137,4 @@ Actual addressing and other environment-specific operational details are maintai
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized monitoring, and an established performance baseline. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
+The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized monitoring, and an established performance baseline. A dedicated Debian LXC now provides a native Homepage dashboard for navigation and selected live service status. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
