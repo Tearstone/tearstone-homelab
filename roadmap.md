@@ -25,7 +25,7 @@
 - [x] Procure managed network switch
 - [x] Connect additional lab systems
 - [x] Establish network performance baseline
-- [ ] Deploy internal DNS
+- [x] Deploy internal DNS
 - [ ] Configure internal hostname resolution
 - [ ] Deploy Certificate Authority
 - [ ] Establish internal PKI
@@ -72,9 +72,9 @@
 - [x] Complete controlled `lab-core01` A/B benchmark between `pve01` and `pve02`
 - [x] Establish G5-specific host benchmark baselines for `pve01` and `pve02`
 - [ ] Measure whole-system power consumption for both G5 nodes
-- [ ] Install 1 TB Optimus 5001 NVMe in `pve01`
-- [ ] Expand `pve01` from 16 GB to 32 GB RAM
-- [ ] Benchmark the upgraded `pve01` configuration
+- [x] Install 1 TB Optimus 5001 NVMe in `pve01`
+- [x] Expand `pve01` from 16 GB to 32 GB RAM
+- [x] Benchmark the upgraded `pve01` configuration
 
 ## Future Ideas
 
