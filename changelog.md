@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-08-30
+
+### pve01 Memory Upgrade
+
+* Added a second 16 GB DDR4-2667 SODIMM to `pve01`.
+* Increased installed memory from 16 GB to 32 GB.
+* `pve01` now operates with 2 × 16 GB SODIMMs in a dual-channel configuration.
+* Updated the README, hardware documentation, and pve01 system documentation to reflect the 32 GB configuration.
+
+### pve01 Benchmarking
+
+* Promoted the existing post-upgrade 32 GB memory results to the current pve01 host baseline.
+* Retained the original 16 GB results as the historical comparison baseline.
+* Documented 1 thread memory results of 24,180.55 MiB/sec read and 21,487.18 MiB/sec write after the upgrade.
+* Documented 6 thread memory results of 106,762.51 MiB/sec read and 78,147.37 MiB/sec write after the upgrade.
+* Updated the benchmarking index to reflect the 32 GB configuration and removed the completed 32 GB upgrade from planned comparisons.
+
 ## 2026-08-29
 
 ### pve02 Storage Expansion
