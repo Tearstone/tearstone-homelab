@@ -4,6 +4,8 @@
 
 Homepage provides a centralized dashboard for navigating and viewing the status of lab services. It is hosted on the dedicated `infra-homepage01` LXC container.
 
+![Nexus Lab Homepage]/images/homepage.jpg
+
 ## Deployment
 
 Homepage is installed directly on Debian GNU/Linux 13 rather than running inside Docker.
