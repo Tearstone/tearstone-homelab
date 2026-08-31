@@ -18,8 +18,11 @@ CPU:
 - 2.20 GHz base frequency
 
 Memory:
-- 16 GiB DDR4 installed
-- Approximately 15 GiB reported by the operating system
+- 32 GiB DDR4 installed
+- 2 × 16 GiB SODIMM
+- DDR4-2667
+- Dual-channel configuration
+- Approximately 31 GiB reported by the operating system
 
 Storage:
 - KXG50ZNV256G TOS NVMe
@@ -90,24 +93,21 @@ Current cluster status:
 
 ## Current Host State
 
-At the time of documentation on 2026-08-22:
+The node was upgraded from 16 GiB to 32 GiB DDR4 in August 2026 by adding a second 16 GiB SODIMM. The two modules now operate in a dual-channel configuration.
 
-```text
-Memory:
-15 GiB total
-5.6 GiB used
-5.7 GiB free
-9.8 GiB available
-8 GiB swap
-```
-
-Swap usage was approximately 749 MiB at the time of the readout.
+The previous host-state readout from 2026-08-22 reflected the original 16 GiB configuration and is retained only as historical context.
 
 ## Workload Placement
 
 `pve01` is the original Proxmox node used for the lab's initial workload placement and remains an active member of the `nexus` cluster.
 
-A controlled workload comparison between `pve01` and `pve02` has established `pve02` as the preferred host for `lab-core01` based on CPU, memory, and random storage performance. The authoritative benchmark results and comparison are documented in `systems/pve02.md`.
+A controlled workload comparison between `pve01` and `pve02` has established `pve02` as the preferred host for `lab-core01` based on CPU, memory, and random storage performance. The authoritative benchmark results and comparison are documented in `benchmarking/G5-Performance-pve01.md` and `benchmarking/G5-Performance-pve02.md`.
+
+## Performance Baseline
+
+The node-specific benchmark was updated after the August 2026 memory upgrade. The original 16 GiB memory results are retained as a historical baseline, and the new 32 GiB results are the current host baseline.
+
+See `benchmarking/G5-Performance-pve01.md` for the complete CPU, memory, NVMe, network, NAS/NFS, and workload comparison results.
 
 ## Public Documentation Policy
 
