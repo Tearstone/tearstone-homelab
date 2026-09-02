@@ -27,24 +27,41 @@ The two G5 systems were benchmarked both as Proxmox hosts and by running the sam
 
 ### Host Baselines
 
-`pve01` was upgraded in August 2026 from 16 GB to 32 GB DDR4 using two 16 GB SODIMMs. The current host memory baseline below reflects the 32 GB configuration. The original 16 GB results remain documented in the pve01 benchmark record for comparison.
+Both nodes now have 32 GB RAM. `pve01` and `pve02` use two 16 GB SODIMMs. The pve01 and pve02 node documents retain the original 16 GB results as historical comparison baselines where available.
 
 | Metric | `pve01` | `pve02` |
 | ------ | ------: | ------: |
 | CPU, 1 thread | 1,221.43 events/sec | **1,438.38 events/sec** |
 | CPU, 4 threads | — | **5,543.02 events/sec** |
 | CPU, 6 threads | **6,734.57 events/sec** | — |
-| Memory read, 1 thread | **24,180.55 MiB/sec** | **29,606.82 MiB/sec** |
-| Memory write, 1 thread | **21,487.18 MiB/sec** | **25,190.33 MiB/sec** |
+| Memory read, 1 thread | **24,180.55 MiB/sec** | **29,995.98 MiB/sec** |
+| Memory write, 1 thread | **21,487.18 MiB/sec** | **25,693.97 MiB/sec** |
+| Memory read, 4 threads | — | **112,454.39 MiB/sec** |
+| Memory write, 4 threads | — | **85,633.22 MiB/sec** |
 | Memory read, 6 threads | **106,762.51 MiB/sec** | — |
 | Memory write, 6 threads | **78,147.37 MiB/sec** | — |
-| Raw NVMe sequential read | 2,064 MiB/s | **2,990 MiB/s** |
+| Raw NVMe sequential read | 2,064 MiB/s | **3,425 MiB/s** |
 
 The host CPU results are not directly interchangeable because `pve01` uses the 35 W i5-9500T and `pve02` uses the 65 W i5-9500. The node-specific documents retain the appropriate native test configuration.
 
+### pve02 Memory Upgrade
+
+`pve02` was upgraded in September 2026 from 16 GB to 32 GB DDR4 using two 16 GB SODIMMs. The modules are rated at 3200 MT/s, while the EliteDesk currently configures them at 2667 MT/s.
+
+The directly comparable 1 thread results are:
+
+| Operation | 16 GB Baseline | 32 GB | Change |
+| --- | ---: | ---: | ---: |
+| Read | 29,946 MiB/sec | **29,995.98 MiB/sec** | **+0.17%** |
+| Write | 25,063 MiB/sec | **25,693.97 MiB/sec** | **+2.51%** |
+
+The upgrade did not materially increase single-thread memory bandwidth. Its primary benefit is doubling available memory from 16 GB to 32 GB, providing substantially more headroom for VMs and concurrent workloads.
+
+Additional 4 thread testing established a new multi-thread memory baseline of **112,454.39 MiB/sec read** and **85,633.22 MiB/sec write**. No equivalent 16 GB baseline is documented, so no percentage improvement is assigned to those results.
+
 ### pve01 Memory Upgrade
 
-The documented memory comparison is:
+The documented pve01 memory comparison is:
 
 | Operation | 16 GB Baseline | 32 GB | Change |
 | --- | ---: | ---: | ---: |
@@ -119,6 +136,6 @@ Future benchmark updates should be made to the node-specific documents rather th
 
 ## Baseline Date
 
-**August 2026**
+**September 2026**
 
-**Last updated:** August 30, 2026
+**Last updated:** September 1, 2026
