@@ -33,12 +33,14 @@ Intel Core i5-9500
 3.0 GHz base frequency
 
 Memory  
-16 GB DDR4  
-2 × 8 GB
+32 GB DDR4  
+2 × 16 GB SODIMM  
+3200 MT/s rated  
+2667 MT/s configured
 
 Storage  
 256 GB WDC/SanDisk PC SN730 NVMe  
-1 TB SanDisk Optimus 5100 NVMe
+1 TB SanDisk Optimus 5001 NVMe
 
 Network  
 Intel I219-LM 1 Gb Ethernet
@@ -66,7 +68,7 @@ Approximately 16 GB of the system NVMe volume group remains free for future flex
 Additional NVMe:
 
 ```text
-931.5 GiB SanDisk Optimus 5100
+931.5 GiB SanDisk Optimus 5001
 └── GPT
     └── nvme0n1p1     931.5 GiB Linux LVM
         └── pve-fast VG
@@ -108,7 +110,7 @@ The preliminary pve02 storage run produced approximately 462K read IOPS and 455K
 
 The results show that `pve02` is consistently faster for the tested `lab-core01` workload across CPU, memory bandwidth, and random storage I/O. `lab-core01` was therefore migrated to `pve02` and will remain there as the preferred host.
 
-The VM's 80 GB system disk now resides on the dedicated `nvme-lvm` storage tier provided by the 1 TB Optimus 5100. The migration was performed online with `qm move_disk` and the source volume was removed only after the mirror completed successfully.
+The VM's 80 GB system disk now resides on the dedicated `nvme-lvm` storage tier provided by the 1 TB Optimus 5001. The migration was performed online with `qm move_disk` and the source volume was removed only after the mirror completed successfully.
 
 Power consumption has not yet been measured because a suitable power meter is not currently available. The low-power objective remains a design consideration for future measurement.
 
