@@ -24,7 +24,7 @@ The lab is built as a practical learning environment where new technologies are 
   * Proxmox VE
 * HP EliteDesk 800 G5 Mini `pve02`
   * Intel Core i5-9500
-  * 16 GB RAM
+  * 32 GB RAM
   * Proxmox VE
 * MacBook Pro 2020
 
@@ -42,7 +42,7 @@ The lab is built as a practical learning environment where new technologies are 
 
 * Zyxel NAS326
 * 256 GB system NVMe on each G5 node
-* 1 TB SanDisk Optimus 5100 NVMe on `pve02`
+* 1 TB SanDisk Optimus 5001 NVMe on `pve02`
 * Dedicated Proxmox `nvme-lvm` LVM-thin storage on `pve02`
 * NFS shared storage
 * NAS-backed Immich media storage
@@ -93,9 +93,9 @@ Both HP EliteDesk 800 G5 Mini systems have been benchmarked as Proxmox nodes, an
 
 The current results show `pve02` providing a consistent performance advantage for `lab-core01`, with approximately 22–29% improvement across the tested CPU, memory, and 4K random I/O workloads. `lab-core01` has therefore been migrated to `pve02` as its preferred placement.
 
-The addition of the 1 TB SanDisk Optimus 5100 NVMe to `pve02` established a new dedicated high-performance storage tier. Raw-device fio testing using `io_uring`, queue depth 32, measured approximately 3.4 GiB/s sequential read, 3.2 GiB/s sequential write, 355K 4K random-read IOPS, 102K 4K random-write IOPS, and 63K read / 27K write IOPS in a 70/30 random mixed workload.
+The addition of the 1 TB SanDisk Optimus 5001 NVMe to `pve02` established a new dedicated high-performance storage tier. Raw-device fio testing using `io_uring`, queue depth 32, measured approximately 3.4 GiB/s sequential read, 3.2 GiB/s sequential write, 355K 4K random-read IOPS, 102K 4K random-write IOPS, and 63K read / 27K write IOPS in a 70/30 random mixed workload.
 
-`pve01` was upgraded from 16 GB to 32 GB DDR4 using a second 16 GB SODIMM. The post-upgrade memory benchmark is now the current host baseline, while the original 16 GB results are retained for comparison in the node-specific benchmark record.
+Both G5 nodes now have 32 GB of RAM. `pve01` and `pve02` each use two 16 GB SODIMMs. The pve02 upgrade from 16 GB to 32 GB established a new memory baseline of 29,995.98 MiB/sec read and 25,693.97 MiB/sec write with one thread, with additional four-thread results of 112,454.39 MiB/sec read and 85,633.22 MiB/sec write. The primary benefit of the upgrade is increased memory capacity and workload headroom rather than a material change in single-thread memory bandwidth.
 
 Benchmarks cover:
 
@@ -119,7 +119,8 @@ The immediate infrastructure direction is to continue optimizing the two-node G5
 Current work includes:
 
 * `pve01` now has 32 GB DDR4 in a 2 × 16 GB dual-channel configuration
-* `pve02` has a dedicated 1 TB SanDisk Optimus 5100 NVMe storage tier exposed to Proxmox as `nvme-lvm`
+* `pve02` now has 32 GB DDR4 in a 2 × 16 GB configuration
+* `pve02` has a dedicated 1 TB SanDisk Optimus 5001 NVMe storage tier exposed to Proxmox as `nvme-lvm`
 * `lab-core01` VM 100's 80 GB system disk has been migrated from `local-lvm` to `nvme-lvm` while the VM remained running
 * Maintain NAS-backed Proxmox backups and verify backup availability
 * Measure whole-system idle and load power
