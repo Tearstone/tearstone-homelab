@@ -12,10 +12,12 @@ Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE on `pve
 | CPU Cores | 6 |
 | CPU Threads | 6 |
 | CPU Base Frequency | 3.0 GHz |
-| RAM | 16 GB DDR4 |
-| RAM Configuration | 2 × 8 GB SODIMM |
+| RAM | 32 GB DDR4 |
+| RAM Configuration | 2 × 16 GB SODIMM |
+| RAM Rated Speed | 3200 MT/s |
+| RAM Configured Speed | 2667 MT/s |
 | System Storage | WDC/SanDisk PC SN730 256 GB NVMe |
-| Additional Storage | SanDisk Optimus 5100 1 TB NVMe |
+| Additional Storage | SanDisk Optimus 5001 1 TB NVMe |
 | Proxmox VE | 9.2.2 |
 | Kernel | 7.0.2-6-pve |
 | Network | 1 Gb Ethernet |
@@ -23,6 +25,8 @@ Performance baseline for the HP EliteDesk 800 G5 Mini running Proxmox VE on `pve
 | Proxmox Bridge | `vmbr0` |
 
 `pve02` is the second physical node in the two-node `nexus` Proxmox cluster.
+
+The node was upgraded in September 2026 from 16 GB to 32 GB using two 16 GB DDR4-3200 SODIMMs. The EliteDesk platform currently configures the memory at 2667 MT/s.
 
 ## Network Configuration
 
@@ -63,10 +67,10 @@ The `pve` volume group retains approximately 16 GiB of free capacity.
 
 ### 1 TB NVMe Expansion
 
-A SanDisk Optimus 5100 1 TB NVMe was added as a second physical drive. The drive is approximately 931.5 GiB and was configured as a dedicated LVM-thin storage tier:
+A SanDisk Optimus 5001 1 TB NVMe was added as a second physical drive. The drive is approximately 931.5 GiB and was configured as a dedicated LVM-thin storage tier:
 
 ```text
-931.5 GiB SanDisk Optimus 5100
+931.5 GiB SanDisk Optimus 5001
 └── GPT
     └── nvme0n1p1     931.5 GiB Linux LVM
         └── pve-fast VG
@@ -87,7 +91,7 @@ The thin pool was created across the available capacity of the 1 TB NVMe. LVM se
 
 ## 1 TB NVMe Raw Performance
 
-The Optimus 5100 was tested as a raw device before partitioning and deployment. Tests used `fio` 3.39 with the `io_uring` I/O engine, direct I/O, one worker, queue depth 32, and 30-second time-based runs.
+The Optimus 5001 was tested as a raw device before partitioning and deployment. Tests used `fio` 3.39 with the `io_uring` I/O engine, direct I/O, one worker, queue depth 32, and 30-second time-based runs.
 
 ### Sequential Read
 
@@ -163,21 +167,45 @@ These results are raw-device measurements and should not be treated as direct me
 
 ### CPU
 
+The existing CPU baseline was established before the September 2026 memory upgrade. The memory change does not invalidate the CPU result.
+
 ```text
-1 thread: 1,438 events/s
-6 threads: 8,131 events/s
+1 thread: 1,438.38 events/s
+4 threads: 5,543.02 events/s
 ```
 
 ### Memory
 
-```text
-read: 29,946 MiB/s
-write: 25,063 MiB/s
-```
+The original 16 GB baseline was measured using 1 MiB blocks, 10 GiB total transfer, one thread, and global scope. The system was subsequently upgraded to 32 GB using two 16 GB SODIMMs.
 
-### Original System NVMe
+#### Original 16 GB Baseline
 
-The original 256 GB NVMe produced the earlier baseline used for the pve01/pve02 comparison. An 8 GB LVM test volume produced approximately 217K 4K random-read IOPS and 134K 4K random-write IOPS at queue depth 32.
+| Operation | 16 GB Baseline |
+| --- | ---: |
+| Read | **29,946 MiB/s** |
+| Write | **25,063 MiB/s** |
+
+#### 32 GB Upgrade Results
+
+The same 1 thread test was repeated after the RAM upgrade.
+
+| Operation | 16 GB Baseline | 32 GB | Change |
+| --- | ---: | ---: | ---: |
+| Read | 29,946 MiB/s | **29,995.98 MiB/s** | **+0.17%** |
+| Write | 25,063 MiB/s | **25,693.97 MiB/s** | **+2.51%** |
+
+The single-thread results show essentially unchanged memory bandwidth after doubling capacity. The primary benefit of the upgrade is increasing available memory from 16 GB to 32 GB.
+
+Additional four-thread testing was performed after the upgrade using 1 MiB blocks and a 20 GiB total transfer:
+
+| Operation | Threads | Total Transfer | Result |
+| --- | ---: | ---: | ---: |
+| Read | 4 | 20 GiB | **112,454.39 MiB/s** |
+| Write | 4 | 20 GiB | **85,633.22 MiB/s** |
+
+The existing 16 GB benchmark documentation does not contain corresponding four-thread, 20 GiB memory results, so a percentage improvement cannot be calculated for those tests without inventing a baseline. The four-thread results are retained as the new 32 GB multi-thread memory baseline.
+
+The installed modules are rated for 3200 MT/s but the platform currently configures them at 2667 MT/s. The benchmark results therefore represent the system's actual configured memory speed rather than the modules' rated maximum.
 
 ## lab-core01 Workload Placement Test
 
@@ -198,7 +226,7 @@ The preliminary cached pve02 storage result of approximately 462K read IOPS and 
 
 The results showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random storage I/O. `lab-core01` was migrated to `pve02` and is now the preferred host for this workload.
 
-The VM's 80 GB system disk now resides on `nvme-lvm`, the dedicated storage tier provided by the 1 TB Optimus 5100. The online migration was performed with `qm move_disk` and the original `local-lvm` volume was removed only after the mirror completed successfully.
+The VM's 80 GB system disk now resides on `nvme-lvm`, the dedicated storage tier provided by the 1 TB Optimus 5001. The online migration was performed with `qm move_disk` and the original `local-lvm` volume was removed only after the mirror completed successfully.
 
 ## lab-core01 Post-Migration Validation
 
@@ -243,4 +271,4 @@ This public benchmark intentionally omits private IP addresses, MAC addresses, s
 
 ## Baseline Date
 
-August 2026
+September 2026
