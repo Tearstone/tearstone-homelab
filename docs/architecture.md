@@ -61,7 +61,7 @@ The homelab now consists of a two-node Proxmox VE cluster named `nexus` running 
 | Node | CPU | RAM | Local Storage |
 | ---- | --- | --- | ------------- |
 | `pve01` | Intel Core i5-9500T, 6C/6T | 32 GB | 256 GB NVMe |
-| `pve02` | Intel Core i5-9500, 6C/6T | 16 GB | 256 GB NVMe + 1 TB NVMe |
+| `pve02` | Intel Core i5-9500, 6C/6T | 32 GB | 256 GB NVMe + 1 TB NVMe |
 
 Both nodes run Proxmox VE 9.2.2 and are currently quorate members of the `nexus` cluster.
 
@@ -69,7 +69,7 @@ The nodes are intentionally compact and low-power compared with traditional ente
 
 `pve02` was installed with a deliberately lean root allocation and approximately 197 GB of local LVM-thin data storage. A second 1 TB SanDisk Optimus 5100 NVMe was subsequently added and exposed to Proxmox as the `nvme-lvm` storage tier.
 
-`pve01` was upgraded from 16 GB to 32 GB using a second 16 GB DDR4 SODIMM, resulting in a 2 × 16 GB dual-channel configuration. The post-upgrade memory results are now the current host baseline.
+`pve02` was upgraded to 32 GB using 2 × 16 GB DDR4 SODIMMs. The modules are rated for 3200 MT/s, while the Intel platform configures them at 2667 MT/s. The post-upgrade memory results are recorded below as the current host baseline.
 
 The Zyxel NAS326 provides network storage using NFS. The NAS remains an important shared storage tier for application data, backups, and Immich media.
 
@@ -148,6 +148,40 @@ The preliminary cached pve02 storage result of approximately 462K read IOPS and 
 The benchmark showed a consistent performance advantage for `pve02` across CPU, memory bandwidth, and random storage I/O. `lab-core01` was subsequently migrated to `pve02` and is now the preferred placement for that workload.
 
 Power consumption was not measured because a suitable power meter was not available. Power efficiency remains a future measurement rather than an assumption.
+
+## PVE02 Hardware Benchmarks
+
+### Memory Benchmark
+
+Following the installation of 2 × 16 GB DDR4 SODIMMs, `pve02` reports 31 GiB usable memory from the 32 GB installed capacity. The modules are rated for 3200 MT/s, but the platform configures them at 2667 MT/s.
+
+The baseline memory benchmark used `sysbench memory` with a 1 MiB block size. Single-thread tests transferred 10 GiB, while four-thread tests transferred 20 GiB.
+
+| Test | Result |
+| ---- | -----: |
+| 1 thread read | 29,996 MiB/s |
+| 1 thread write | 25,694 MiB/s |
+| 4 thread read | 112,454 MiB/s |
+| 4 thread write | 85,633 MiB/s |
+
+These results are the post-upgrade `pve02` memory baseline and should be used for future hardware or configuration comparisons.
+
+### NVMe Storage Benchmark
+
+The 1 TB SanDisk Optimus 5100 NVMe is presented to Proxmox as the `nvme-lvm` storage tier backed by the `pve-fast` LVM volume group. The storage pool provides approximately 931 GB of usable LVM-thin capacity.
+
+A temporary 4 GB thin-provisioned logical volume was created for testing. The test used `fio` with 4 KiB random I/O, queue depth 32, direct I/O, a single worker, and a 60 second time-based run. The final controlled benchmark was performed with the workload VMs stopped to minimize guest I/O interference.
+
+| Test | Result |
+| ---- | -----: |
+| 4K random read | **296K IOPS / 1,157 MiB/s** |
+| 4K random write | **156K IOPS / 610 MiB/s** |
+
+The read test averaged approximately 108 microseconds total latency, with the 99th percentile at approximately 135 microseconds. The write test averaged approximately 205 microseconds total latency, with the 99th percentile at approximately 273 microseconds. Higher percentile write latency was substantially more variable, reaching approximately 5.5 ms at the 99.99th percentile.
+
+An earlier run was performed while the two VMs were still running and produced approximately 303K read IOPS / 1,182 MiB/s and 161K write IOPS / 627 MiB/s. Those results were retained as an observation but are not considered the controlled baseline because guest workloads were active. The subsequent VM-stopped results above are the authoritative `nvme-lvm` benchmark.
+
+The temporary fio test volume was removed after testing. No test data remains on the `nvme-lvm` storage tier.
 
 ### lab-core01 Memory Observation
 
