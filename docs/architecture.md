@@ -99,7 +99,9 @@ Homepage 2.1.2
 
 The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation.
 
-Homepage provides navigation to the lab's primary infrastructure and applications, including Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard, and Immich. The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access.
+Homepage provides navigation and widgets for the lab's primary infrastructure and applications, including Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard, and Immich. The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access. Immich uses a dedicated API key restricted to server statistics.
+
+The Homepage service configuration uses environment variables for API secrets. The local `.env` file is excluded from Git and is not part of the public documentation repository. A sanitized example configuration is maintained at `docs/homepage-services.yaml.example` with private host addresses and credentials replaced by placeholders.
 
 The Proxmox widget displays cluster-wide VM and LXC counts and cluster CPU and memory utilization. Node-specific statistics can be configured separately if required.
 
@@ -216,4 +218,4 @@ graph TD
 
 ## Public Documentation Policy
 
-This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme.
+This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme. Homepage configuration examples use placeholders for private host addresses and environment variables for secrets.
