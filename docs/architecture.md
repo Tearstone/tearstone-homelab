@@ -103,7 +103,9 @@ The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RA
 
 Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard Home, and Immich.
 
-The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, and application statistics from Immich.
+The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, application statistics from Immich, and Prometheus target health.
+
+The Prometheus widget queries the Prometheus targets API and reports the number of active targets that are up, down, and total. This provides a quick monitoring health check without duplicating the detailed visualization provided by Grafana.
 
 The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access. The Proxmox widget displays cluster-wide VM and LXC counts and cluster CPU and memory utilization. Node-specific statistics can be configured separately if required.
 
