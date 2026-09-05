@@ -32,6 +32,9 @@
         icon: prometheus.png
         href: http://PROMETHEUS_HOST:9090/classic/targets
         description: Metrics collection
+        widget:
+          type: prometheus
+          url: http://PROMETHEUS_HOST:9090
 
 - Management:
     - Portainer:
