@@ -1,0 +1,55 @@
+# Homepage services.yaml example
+#
+# Replace the example hostnames or addresses with your local values.
+# API secrets are intentionally supplied through environment variables and
+# must not be committed to this repository.
+
+- Infrastructure:
+    - Proxmox:
+        icon: proxmox.png
+        href: https://PROXMOX_HOST:8006
+        description: Proxmox VE Cluster
+        widget:
+          type: proxmox
+          url: https://PROXMOX_HOST:8006
+          username: homepage@pam!dashboard
+          password: {{HOMEPAGE_VAR_PROXMOX_TOKEN}}
+    - ZyXEL NAS326:
+        icon: mdi-nas
+        href: http://NAS_HOST
+        description: Network Attached Storage
+    - NETGEAR GS108Ev4:
+        icon: netgear.png
+        href: http://SWITCH_HOST/login.cgi
+        description: 1GB Network Switch
+
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: http://GRAFANA_HOST:3000
+        description: Metrics and dashboards
+    - Prometheus:
+        icon: prometheus.png
+        href: http://PROMETHEUS_HOST:9090/classic/targets
+        description: Metrics collection
+
+- Management:
+    - Portainer:
+        icon: portainer.png
+        href: https://PORTAINER_HOST:9443
+        description: Docker management
+    - AdGuard:
+        icon: adguard-home.png
+        href: http://ADGUARD_HOST
+        description: DNS Administration
+
+- Applications:
+    - Immich:
+        icon: immich.png
+        href: http://IMMICH_HOST:2283
+        description: Photo management
+        widget:
+          type: immich
+          url: http://IMMICH_HOST:2283
+          key: {{HOMEPAGE_VAR_IMMICH_API_KEY}}
+          version: 2
