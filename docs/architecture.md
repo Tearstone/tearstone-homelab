@@ -49,6 +49,8 @@ graph TD
     Core -->|"read-write NFS-backed storage"| Immich["Immich Managed Storage"]
 
     Homepage -->|"Proxmox API: read-only"| PVE
+    Homepage -->|"AdGuard API"| AdGuard["AdGuard Home"]
+    Homepage -->|"Immich API"| Immich
     Homepage -->|"Dashboard links / widgets"| Grafana
     Homepage -->|"Dashboard links / widgets"| Prometheus
     Homepage -->|"Dashboard links"| Core
@@ -97,13 +99,35 @@ pnpm 10.34.5
 Homepage 2.1.2
 ```
 
-The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation.
+The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation. The build required `NODE_OPTIONS="--max-old-space-size=768"` to provide sufficient Node.js heap during compilation. The additional memory is a build-time requirement; normal Homepage operation remains at 512 MB.
 
-Homepage provides navigation and widgets for the lab's primary infrastructure and applications, including Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard, and Immich. The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access. Immich uses a dedicated API key restricted to server statistics.
+Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard Home, and Immich.
 
-The Homepage service configuration uses environment variables for API secrets. The local `.env` file is excluded from Git and is not part of the public documentation repository. A sanitized example configuration is maintained at `docs/homepage-services.yaml.example` with private host addresses and credentials replaced by placeholders.
+The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, and application statistics from Immich.
 
-The Proxmox widget displays cluster-wide VM and LXC counts and cluster CPU and memory utilization. Node-specific statistics can be configured separately if required.
+The Proxmox integration uses a dedicated read-only `homepage@pam` account and a privilege-separated API token with `PVEAuditor` access. The Proxmox widget displays cluster-wide VM and LXC counts and cluster CPU and memory utilization. Node-specific statistics can be configured separately if required.
+
+The AdGuard integration uses the `/control/stats` API and HTTP Basic Authentication. The Immich integration uses a dedicated API key restricted to server statistics.
+
+API secrets are supplied through Homepage environment variables. The local `.env` file is excluded from Git and is not part of the public documentation repository. A sanitized example configuration is maintained at `docs/homepage-services.yaml.example` with private host addresses and credentials replaced by placeholders.
+
+### Homepage Service
+
+Homepage runs as a native systemd service on `infra-homepage01`:
+
+```ini
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/homepage/homepage
+Environment=NODE_ENV=production
+Environment=HOMEPAGE_ALLOWED_HOSTS=<HOMEPAGE_HOST>:3000
+ExecStart=/usr/bin/pnpm start
+Restart=on-failure
+RestartSec=5
+```
+
+The application is started with `pnpm start` after the production build has completed. The dashboard is accessed on TCP port 3000.
 
 ## Cluster
 
