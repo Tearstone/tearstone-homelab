@@ -42,6 +42,11 @@
         icon: adguard-home.png
         href: http://ADGUARD_HOST
         description: DNS Administration
+        widget:
+          type: adguard
+          url: http://ADGUARD_HOST
+          username: ADGUARD_USERNAME
+          password: {{HOMEPAGE_VAR_ADGUARD_PASSWORD}}
 
 - Applications:
     - Immich:
