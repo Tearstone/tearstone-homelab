@@ -29,15 +29,17 @@ graph TD
             Grafana["infra-grafana01\nGrafana"]
             Prometheus["infra-prometheus01\nPrometheus"]
             Homepage["infra-homepage01\nHomepage"]
+            Uptime["infra-uptime01\nUptime Kuma"]
         end
 
         PVE --> Kali
         PVE --> Qualys
         PVE --> Grafana
         PVE --> Prometheus
+        PVE --> Homepage
+        PVE --> Uptime
         PVE02 --> Core
         PVE02 --> Web
-        PVE --> Homepage
     end
 
     Switch --> PVE
@@ -53,10 +55,16 @@ graph TD
     Homepage -->|"Immich API"| Immich
     Homepage -->|"Dashboard links / widgets"| Grafana
     Homepage -->|"Dashboard links / widgets"| Prometheus
+    Homepage -->|"Uptime Kuma status widget"| Uptime
     Homepage -->|"Dashboard links"| Core
+
+    Uptime -->|"Availability checks"| Prometheus
+    Uptime -->|"Availability checks"| Public["Public Websites"]
+    Uptime -->|"Availability checks"| Internal["Internal Services"]
+    Uptime -->|"SMTP alerts"| SMTP["Google Workspace SMTP"]
 ```
 
-The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. A dedicated Debian 13 LXC, `infra-homepage01`, provides the Homepage dashboard used as the primary navigation and operational landing page for lab services.
+The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. Dedicated Debian 13 LXCs provide the Homepage dashboard and Uptime Kuma availability monitoring used for navigation, operational status, and alerting.
 
 ### Proxmox Nodes
 
@@ -83,7 +91,7 @@ The Zyxel NAS326 provides network storage using NFS. The NAS remains an importan
 
 The existing NAS photo collection is presented to Immich as a read-only External Library. Immich managed storage is also hosted on the NAS, while Immich thumbnails and PostgreSQL remain on local NVMe storage to preserve low-latency application performance.
 
-Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics.
+Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics. Uptime Kuma independently monitors service availability and public endpoints and sends email notifications when monitored services fail or recover.
 
 ### Homepage Dashboard
 
@@ -101,9 +109,9 @@ Homepage 2.1.2
 
 The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation. The build required `NODE_OPTIONS="--max-old-space-size=768"` to provide sufficient Node.js heap during compilation. The additional memory is a build-time requirement; normal Homepage operation remains at 512 MB.
 
-Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Portainer, AdGuard Home, and Immich.
+Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Uptime Kuma, Portainer, AdGuard Home, and Immich.
 
-The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, application statistics from Immich, and Prometheus target health.
+The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, application statistics from Immich, Prometheus target health, and aggregate Uptime Kuma availability status.
 
 The Prometheus widget queries the Prometheus targets API and reports the number of active targets that are up, down, and total. This provides a quick monitoring health check without duplicating the detailed visualization provided by Grafana.
 
@@ -112,6 +120,30 @@ The Proxmox integration uses a dedicated read-only `homepage@pam` account and a 
 The AdGuard integration uses the `/control/stats` API and HTTP Basic Authentication. The Immich integration uses a dedicated API key restricted to server statistics.
 
 API secrets are supplied through Homepage environment variables. The local `.env` file is excluded from Git and is not part of the public documentation repository. A sanitized example configuration is maintained at `docs/homepage-services.yaml.example` with private host addresses and credentials replaced by placeholders.
+
+### Uptime Kuma Availability Monitoring
+
+`infra-uptime01` is a dedicated Debian 13 LXC providing Uptime Kuma. Uptime Kuma is installed natively rather than through Docker and runs as a systemd service under the dedicated `uptime-kuma` account.
+
+The initial Uptime Kuma deployment uses:
+
+```text
+Debian GNU/Linux 13
+Node.js 22.23.2
+Uptime Kuma 2.0.0
+SQLite
+TCP 3001
+```
+
+The LXC remains unprivileged. ICMP Ping monitoring is supported by assigning `cap_net_raw` to the Debian `/usr/bin/ping` executable rather than granting raw socket capability to the entire container.
+
+Uptime Kuma monitors infrastructure with ICMP Ping and internal or public applications with HTTP(s) checks. Prometheus is monitored through its `/-/healthy` endpoint. Internal Portainer monitoring selectively ignores TLS validation because the internal endpoint uses a self-signed certificate. Public website monitors retain normal TLS certificate validation.
+
+The initial public HTTPS monitors include `tearstone.com`, `rvtravelbug.com`, and `rsanderlin.com`.
+
+Monitoring uses a 10 minute interval with two retries before a service is considered unavailable. Uptime Kuma sends email notifications through Google Workspace SMTP using TLS/STARTTLS on port 587 and an application-specific password.
+
+Uptime Kuma is integrated with Homepage through a dedicated `Lab Status` status page. Homepage displays the aggregate availability state alongside the existing Prometheus, Grafana, Proxmox, AdGuard, and Immich widgets.
 
 ### Homepage Service
 
@@ -244,4 +276,4 @@ graph TD
 
 ## Public Documentation Policy
 
-This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme. Homepage configuration examples use placeholders for private host addresses and environment variables for secrets.
+This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme. Homepage and Uptime Kuma configuration examples use placeholders for private host addresses and environment variables for secrets.
