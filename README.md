@@ -37,6 +37,7 @@ The lab is built as a practical learning environment where new technologies are 
 * Kali Linux VM
 * Qualys Scanner Appliance
 * `infra-homepage01` Debian 13 LXC providing the Homepage dashboard
+* `infra-uptime01` Debian 13 LXC providing Uptime Kuma monitoring
 
 ### Storage
 
@@ -59,6 +60,8 @@ The lab is built as a practical learning environment where new technologies are 
 * Prometheus
 * Node Exporter
 * Grafana
+* Uptime Kuma
+* Google Workspace SMTP notifications for Uptime Kuma
 
 ### Security
 
@@ -138,4 +141,4 @@ Actual addressing and other environment-specific operational details are maintai
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized monitoring, and an established performance baseline. A dedicated Debian LXC now provides a native Homepage dashboard for navigation and selected live service status. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
+The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized metrics monitoring, service availability monitoring, and an established performance baseline. Dedicated Debian LXCs provide a native Homepage dashboard and Uptime Kuma monitoring for navigation, service status, and alerting. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
