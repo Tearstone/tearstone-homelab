@@ -42,6 +42,13 @@
 * Marked the completed `pve02` 32 GB memory upgrade and benchmarking work.
 * Updated the roadmap status date to September 6, 2026.
 
+### Backup and Recovery Project
+
+* Started the Proxmox Backup and Disaster Recovery project using the existing NAS/NFS infrastructure as the initial backup target.
+* Added `docs/backup.md` defining the backup architecture, workload priorities, project phases, recovery objectives, security considerations, and success criteria.
+* Updated `roadmap.md` to identify backup and recovery as the immediate infrastructure priority and to defer Prometheus Alertmanager and Blackbox Exporter until metric based alerting or probing requirements emerge.
+* Updated `README.md` with the backup and recovery documentation and current project direction.
+
 ## 2026-08-30
 
 ### Homepage Dashboard

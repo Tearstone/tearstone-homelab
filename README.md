@@ -81,6 +81,7 @@ The lab is built as a practical learning environment where new technologies are 
 | Architecture | [Architecture](docs/architecture.md) |
 | Hardware | [Hardware](docs/hardware.md) |
 | Monitoring | [Monitoring](docs/monitoring.md) |
+| Backup and Recovery | [Backup and Recovery](docs/backup.md) |
 | Systems | [Systems](systems/) |
 | Services | [Services](services/) |
 | Storage | [Storage](storage/) |
@@ -116,7 +117,7 @@ Whole-system power consumption has not yet been measured.
 
 ## Current Direction
 
-The immediate infrastructure direction is to continue optimizing the two-node G5 Proxmox cluster rather than moving to larger enterprise servers. The entire lab setup consumes very little power and produces no fan noise. 
+The immediate infrastructure direction is to establish reliable backup and recovery for the two-node Proxmox cluster using the existing NAS/NFS infrastructure. The priority is scheduled backups, verification, restore testing, and documented recovery procedures before adding more infrastructure.
 
 ## Public Documentation Policy
 
@@ -128,4 +129,4 @@ Actual addressing and other environment-specific operational details are maintai
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized metrics monitoring, service availability monitoring, and an established performance baseline. Dedicated Debian LXCs provide a native Homepage dashboard and Uptime Kuma monitoring for navigation, service status, and alerting. The project will continue to evolve as additional compute, storage, networking, automation, and security capabilities are added.
+The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized metrics monitoring, service availability monitoring, and an established performance baseline. Dedicated Debian LXCs provide a native Homepage dashboard and Uptime Kuma monitoring for navigation, service status, and alerting. The current infrastructure priority is to establish and validate a repeatable backup and recovery process for critical workloads.
