@@ -37,9 +37,21 @@ The dashboard currently provides links and selected live widgets for:
 | Group | Services |
 | --- | --- |
 | Infrastructure | Proxmox, Zyxel NAS326, NETGEAR GS108Ev4 |
-| Monitoring | Grafana, Prometheus |
+| Monitoring | Uptime Kuma, Grafana, Prometheus |
 | Management | Portainer, AdGuard |
 | Applications | Immich |
+
+## Uptime Kuma Integration
+
+Homepage integrates with the Uptime Kuma instance hosted on `infra-uptime01`.
+
+The dashboard uses the native Uptime Kuma service widget and retrieves aggregate monitor status from the Uptime Kuma `Lab Status` status page.
+
+The widget displays availability information for the monitors selected for the status page, providing a quick view of lab and public service health directly from the main dashboard.
+
+The Uptime Kuma service entry uses the `uptime-kuma` Dashboard Icons asset.
+
+The live Homepage configuration contains the Uptime Kuma status page URL and other private service addresses. Those values are intentionally excluded from this public repository.
 
 ## Proxmox Widget
 
