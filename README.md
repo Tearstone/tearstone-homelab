@@ -61,7 +61,6 @@ The lab is built as a practical learning environment where new technologies are 
 * Node Exporter
 * Grafana
 * Uptime Kuma
-* Google Workspace SMTP notifications for Uptime Kuma
 
 ### Security
 
@@ -117,19 +116,7 @@ Whole-system power consumption has not yet been measured.
 
 ## Current Direction
 
-The immediate infrastructure direction is to continue optimizing the two-node G5 Proxmox cluster rather than moving to larger enterprise servers.
-
-Current work includes:
-
-* `pve01` now has 32 GB DDR4 in a 2 × 16 GB dual-channel configuration
-* `pve02` now has 32 GB DDR4 in a 2 × 16 GB configuration
-* `pve02` has a dedicated 1 TB SanDisk Optimus 5001 NVMe storage tier exposed to Proxmox as `nvme-lvm`
-* `lab-core01` VM 100's 80 GB system disk has been migrated from `local-lvm` to `nvme-lvm` while the VM remained running
-* Maintain NAS-backed Proxmox backups and verify backup availability
-* Measure whole-system idle and load power
-* Continue storage and network performance testing
-* Expand monitoring, DNS, TLS, and network services
-* Explore VLANs, segmentation, automation, and additional security infrastructure
+The immediate infrastructure direction is to continue optimizing the two-node G5 Proxmox cluster rather than moving to larger enterprise servers. The entire lab setup consumes very little power and produces no fan noise. 
 
 ## Public Documentation Policy
 
