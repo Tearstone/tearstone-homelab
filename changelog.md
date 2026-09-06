@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-09-06
+
+### Uptime Kuma Monitoring
+
+* Provisioned `infra-uptime01` as a dedicated Debian 13 unprivileged LXC for Uptime Kuma.
+* Installed Uptime Kuma 2.0.0 natively rather than adding a Docker layer.
+* Installed Node.js 22.23.2 LTS and npm 10.9.8.
+* Configured Uptime Kuma to run as the dedicated `uptime-kuma` system account under systemd.
+* Selected SQLite for the initial Uptime Kuma database.
+* Configured 10 minute monitoring intervals with two retries before declaring a monitor unavailable.
+* Enabled ICMP Ping monitoring in the unprivileged LXC by assigning `cap_net_raw` to `/usr/bin/ping` rather than granting raw socket capability to the entire container.
+* Added HTTP(s) monitoring for internal services and public websites.
+* Configured Prometheus monitoring through its `/-/healthy` health endpoint.
+* Configured Portainer HTTPS monitoring with TLS validation disabled for the internal self-signed certificate.
+* Added public HTTPS monitoring for `tearstone.com`, `rvtravelbug.com`, and `rsanderlin.com` with certificate validation enabled.
+* Configured Google Workspace SMTP using TLS/STARTTLS on port 587 and an application-specific password for email notifications.
+* Created the `Lab Status` Uptime Kuma status page for dashboard integration.
+
+### Homepage Integration
+
+* Added the Uptime Kuma service and aggregate status widget to the Homepage dashboard.
+* Added Uptime Kuma to the Monitoring group and configured the `uptime-kuma` Dashboard Icons asset.
+* Verified the Homepage Uptime Kuma widget displays monitor availability from the `Lab Status` status page.
+
+### Documentation
+
+* Added `systems/infra-uptime01.md` documenting the host, installation, systemd service, ICMP capability, monitoring strategy, notifications, security, and lessons learned.
+* Added `services/uptime-kuma.md` documenting the Uptime Kuma service and monitoring model.
+* Updated `services/homepage.md` with the Uptime Kuma integration.
+* Updated `docs/monitoring.md` to include Uptime Kuma as the availability and alerting layer alongside Prometheus and Grafana.
+* Updated `docs/architecture.md` with the new `infra-uptime01` LXC, Homepage integration, monitoring flows, and SMTP alert path.
+* Updated `README.md` with Uptime Kuma and `infra-uptime01` in the current environment and monitoring stack.
+
 ## 2026-08-30
 
 ### Homepage Dashboard
