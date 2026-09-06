@@ -33,6 +33,15 @@
 * Updated `docs/architecture.md` with the new `infra-uptime01` LXC, Homepage integration, monitoring flows, and SMTP alert path.
 * Updated `README.md` with Uptime Kuma and `infra-uptime01` in the current environment and monitoring stack.
 
+### Roadmap
+
+* Updated `roadmap.md` to mark Uptime Kuma deployment, infrastructure and application availability monitoring, and availability email alerting as complete.
+* Added dedicated Homepage and Uptime Kuma infrastructure milestones.
+* Marked the established Cloudflare Tunnel pattern for public web applications as complete.
+* Corrected the 1 TB Optimus 5001 NVMe milestone to identify `pve02` as the host.
+* Marked the completed `pve02` 32 GB memory upgrade and benchmarking work.
+* Updated the roadmap status date to September 6, 2026.
+
 ## 2026-08-30
 
 ### Homepage Dashboard
