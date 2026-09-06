@@ -24,6 +24,8 @@
 - [ ] Configure Prometheus alerting and Alertmanager
 - [ ] Blackbox Exporter
 
+Prometheus Alertmanager and Blackbox Exporter are intentionally deferred. Uptime Kuma currently provides the lab's availability monitoring and notification requirements. Prometheus alerting will be revisited when metric based operational alerts become necessary.
+
 ## Phase 3 — Network and Core Services
 
 - [x] Procure managed network switch
@@ -45,6 +47,10 @@
 - [ ] Configure automated Proxmox backups
 - [ ] Implement backup verification
 - [ ] Document backup and recovery procedures
+
+**Current project:** Proxmox Backup and Disaster Recovery. The existing NAS/NFS infrastructure will be used as the initial backup target. The project will establish scheduled backups, retention, verification, restore testing, and documented recovery objectives.
+
+See [Backup and Recovery](docs/backup.md) for the project plan.
 
 ## Phase 5 — Applications and Services
 
@@ -112,7 +118,8 @@
 - [x] Document Homepage deployment
 - [x] Document Uptime Kuma deployment
 - [x] Document monitoring architecture
+- [x] Define backup and recovery project plan
 
 ## Notes
 
-The roadmap was updated on September 6, 2026 to reflect the current infrastructure. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, and Uptime Kuma availability monitoring are complete. The lab now has separate monitoring layers for infrastructure metrics and service availability. High availability, automated backup verification, centralized logging, network segmentation, and advanced security infrastructure remain future work.
+The roadmap was updated on September 6, 2026 to reflect the current infrastructure and the start of the backup and recovery project. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, and Uptime Kuma availability monitoring are complete. The lab now has separate monitoring layers for infrastructure metrics and service availability. Backup automation and recovery validation are now the immediate infrastructure priority. High availability, centralized logging, network segmentation, and advanced security infrastructure remain future work.
