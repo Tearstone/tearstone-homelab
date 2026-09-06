@@ -16,9 +16,13 @@
 - [x] Node Exporter installed
 - [x] Grafana installed
 - [x] Dashboards created
-- [ ] Configure alerting
+- [x] Deploy Uptime Kuma
+- [x] Monitor network and infrastructure services
+- [x] Monitor internal application services
+- [x] Monitor public web services
+- [x] Configure email alerting for availability monitoring
+- [ ] Configure Prometheus alerting and Alertmanager
 - [ ] Blackbox Exporter
-- [ ] Monitor network and infrastructure services
 
 ## Phase 3 — Network and Core Services
 
@@ -51,13 +55,14 @@
 - [ ] Configure HTTPS for internal services
 - [ ] Integrate internal DNS with applications
 - [ ] Integrate Certificate Authority with applications
+- [x] Establish Cloudflare Tunnel pattern for public web applications
 
 ## Phase 6 — Advanced Infrastructure
 
 - [x] Procure second Proxmox node
 - [x] Configure Proxmox cluster
 - [ ] Explore high availability
-- [ ] Expand storage infrastructure
+- [x] Expand storage infrastructure
 - [ ] Implement centralized logging
 - [ ] Explore Ansible and infrastructure automation
 - [ ] Explore infrastructure as code
@@ -72,9 +77,13 @@
 - [x] Complete controlled `lab-core01` A/B benchmark between `pve01` and `pve02`
 - [x] Establish G5-specific host benchmark baselines for `pve01` and `pve02`
 - [ ] Measure whole-system power consumption for both G5 nodes
-- [x] Install 1 TB Optimus 5001 NVMe in `pve01`
+- [x] Install 1 TB Optimus 5001 NVMe in `pve02`
 - [x] Expand `pve01` from 16 GB to 32 GB RAM
+- [x] Expand `pve02` from 16 GB to 32 GB RAM
 - [x] Benchmark the upgraded `pve01` configuration
+- [x] Benchmark the upgraded `pve02` configuration
+- [x] Deploy dedicated Homepage infrastructure LXC
+- [x] Deploy dedicated Uptime Kuma infrastructure LXC
 
 ## Future Ideas
 
@@ -100,7 +109,10 @@
 - [ ] Document backup architecture
 - [ ] Document security architecture
 - [x] Maintain benchmark history
+- [x] Document Homepage deployment
+- [x] Document Uptime Kuma deployment
+- [x] Document monitoring architecture
 
 ## Notes
 
-The roadmap is updated to reflect the current infrastructure as of August 19, 2026. The two-node Proxmox cluster and initial workload benchmarking are complete. High availability remains exploratory rather than implemented.
+The roadmap was updated on September 6, 2026 to reflect the current infrastructure. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, and Uptime Kuma availability monitoring are complete. The lab now has separate monitoring layers for infrastructure metrics and service availability. High availability, automated backup verification, centralized logging, network segmentation, and advanced security infrastructure remain future work.
