@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-09-09
+
+### Backup and Recovery
+
+* Completed the initial Proxmox Backup and Disaster Recovery implementation using the existing Zyxel NAS326 NFS storage.
+* Configured an enabled cluster-level Proxmox backup job to run daily at 02:00.
+* Configured ZSTD compression and snapshot-mode backups for the protected workload set.
+* Protected VM 100 `lab-core01`, VM 103 `prod-web01`, and LXCs 200–204 (`infra-prometheus01`, `infra-grafana01`, `infra-dns01`, `infra-homepage01`, and `infra-uptime01`).
+* Intentionally excluded VM 101 `lab-qualys01` and VM 102 `lab-kali01` from the automated backup scope.
+* Configured retention using Proxmox `prune-backups` with keep-last=3, keep-weekly=1, and keep-monthly=1.
+* Verified scheduled backup execution across the protected workload set, including a successful September 9 backup run.
+* Verified retention/pruning behavior by observing recent, weekly, and monthly recovery points in the NAS backup inventory.
+* Restored the September 8 backup of `infra-dns01` to a temporary LXC and verified the restored Debian filesystem, AdGuard Home installation, configuration, and persistent application data.
+* Kept the restored DNS container isolated from production networking to prevent duplicate service identity and IP conflicts.
+* Confirmed the AdGuard Home startup failure in the isolated restore was caused by the preserved production bind address being unavailable, not by missing or corrupt application data.
+* Destroyed the temporary restore container after verification without affecting production `infra-dns01`.
+* Updated `docs/backup.md` with the implemented architecture, protected workload inventory, retention policy, verification results, restore procedure, recovery considerations, and future resilience gaps.
+* Updated `roadmap.md` to mark automated Proxmox backups, backup verification, backup/recovery procedures, and backup architecture documentation as complete.
+* Updated `README.md` to reflect completion of the initial local backup/recovery implementation and the shift toward offsite disaster-recovery resilience.
+
 ## 2026-09-06
 
 ### Uptime Kuma Monitoring

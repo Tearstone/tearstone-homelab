@@ -117,7 +117,7 @@ Whole-system power consumption has not yet been measured.
 
 ## Current Direction
 
-The immediate infrastructure direction is to establish reliable backup and recovery for the two-node Proxmox cluster using the existing NAS/NFS infrastructure. The priority is scheduled backups, verification, restore testing, and documented recovery procedures before adding more infrastructure.
+The initial local backup and recovery implementation is complete. The Proxmox cluster now performs scheduled backups of critical workloads to the existing NAS/NFS infrastructure, with retention and pruning configured and a representative restore verified. The next resilience priorities are offsite backup, disaster recovery for total NAS loss, and timed recovery exercises to establish realistic RTO targets.
 
 ## Public Documentation Policy
 
@@ -129,4 +129,4 @@ Actual addressing and other environment-specific operational details are maintai
 
 **Actively building, testing, measuring, and documenting.**
 
-The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized metrics monitoring, service availability monitoring, and an established performance baseline. Dedicated Debian LXCs provide a native Homepage dashboard and Uptime Kuma monitoring for navigation, service status, and alerting. The current infrastructure priority is to establish and validate a repeatable backup and recovery process for critical workloads.
+The lab is now a two-node Proxmox environment with shared NAS storage, dedicated local NVMe storage on `pve02`, containerized applications, centralized metrics monitoring, service availability monitoring, a repeatable local backup process, and an established performance baseline. The current infrastructure priority has shifted from establishing local backup to improving disaster-recovery resilience through offsite protection and additional recovery testing.

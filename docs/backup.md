@@ -6,33 +6,39 @@ Establish a reliable backup and recovery capability for the `nexus` Proxmox clus
 
 The goal is not simply to create backup files. The goal is to demonstrate that critical workloads can be recovered from those backups.
 
-## Current State
+## Implemented Backup Configuration
 
-The lab already has:
+The current Proxmox backup job is configured at the cluster level with:
 
-* Two Proxmox nodes in the `nexus` cluster.
-* Shared NFS storage provided by the Zyxel NAS326.
-* Proxmox backup storage configured on the NAS.
-* Multiple VMs and LXCs that represent the current production and infrastructure workloads.
-* Existing monitoring through Prometheus, Grafana, and Uptime Kuma.
+* **Schedule:** Daily at 02:00
+* **Target:** `nas-backup` NFS storage on the Zyxel NAS326
+* **Mode:** Snapshot
+* **Compression:** ZSTD
+* **Retention:** Keep last 3, keep weekly 1, keep monthly 1
+* **Selection:** Seven protected VMs/LXCs listed below
 
-The backup project will formalize and validate this capability rather than introduce another storage platform immediately.
+The backup job is enabled and uses Proxmox `vzdump` scheduling. Retention is implemented through Proxmox `prune-backups` rules.
 
-## Backup Scope
+## Protected Workloads
 
-The initial backup set should include workloads that would require recovery after a Proxmox node failure, storage failure, accidental deletion, or configuration error.
+The current automated backup scope is:
 
-Priority should be based on recoverability and business impact rather than simply backing up every guest equally.
+| VMID | Workload | Type | Protection |
+| ---: | --- | --- | --- |
+| 100 | `lab-core01` | VM | Automated |
+| 103 | `prod-web01` | VM | Automated |
+| 200 | `infra-prometheus01` | LXC | Automated |
+| 201 | `infra-grafana01` | LXC | Automated |
+| 202 | `infra-dns01` | LXC | Automated |
+| 203 | `infra-homepage01` | LXC | Automated |
+| 204 | `infra-uptime01` | LXC | Automated |
 
-### Initial Priority
+The following workloads are intentionally excluded:
 
-1. `lab-core01`
-2. `prod-web01`
-3. `infra-homepage01`
-4. `infra-uptime01`
-5. Other noncritical lab VMs and LXCs
+* VM 101 `lab-qualys01` — disposable scanner appliance with no persistent data that currently requires recovery.
+* VM 102 `lab-kali01` — intentionally excluded from the automated backup scope for now.
 
-The exact backup inventory will be confirmed during implementation.
+The backup scope may be revised as workload criticality and recovery requirements evolve.
 
 ## Backup Architecture
 
@@ -43,6 +49,7 @@ flowchart LR
     PVE02["pve02"]
     NAS["Zyxel NAS326"]
     NFS["NFS backup storage"]
+    RETAIN["Proxmox retention / pruning"]
     VERIFY["Backup verification"]
     RESTORE["Test restore"]
 
@@ -51,73 +58,89 @@ flowchart LR
     PVE01 --> NFS
     PVE02 --> NFS
     NAS --> NFS
-    NFS --> VERIFY
+    NFS --> RETAIN
+    RETAIN --> VERIFY
     VERIFY --> RESTORE
 ```
 
-The initial design uses the NAS as the backup target because it already provides shared NFS storage and avoids adding unnecessary infrastructure before the recovery process itself is proven.
+The NAS is the initial backup target because it already provides shared NFS storage. This avoids introducing another backup platform before the local backup and recovery process is proven.
 
-## Project Phases
+## Backup Execution and Verification
 
-### Phase 1 — Inventory
+Automated backups were observed completing successfully on consecutive scheduled runs. The September 9, 2026 run completed all seven selected workloads successfully.
 
-* Identify all VMs and LXCs requiring protection.
-* Classify workloads as critical, important, or disposable.
-* Identify application specific data that is not contained in the guest backup.
-* Establish recovery priorities.
+Proxmox also recorded the active pruning policy in the scheduled `vzdump` invocation:
 
-### Phase 2 — Automated Backups
+```text
+--prune-backups 'keep-last=3,keep-monthly=1,keep-weekly=1'
+```
 
-* Configure scheduled Proxmox backup jobs.
-* Store backups on the existing NAS backed storage.
-* Select an initial retention policy appropriate for the NAS capacity.
-* Confirm backup jobs execute from the intended Proxmox node or cluster configuration.
+The resulting backup inventory demonstrated that retention rules were being applied. Recovery points from the most recent three runs were retained, with older weekly and monthly recovery points retained where they satisfied those rules.
 
-### Phase 3 — Verification
+The NAS backup directory contained 31 actual compressed backup archives at the time of verification, along with associated Proxmox log and notes files. The directory contained 31 `.zst` archives, 31 `.log` files, and 30 `.notes` files.
 
-* Confirm successful completion of backup jobs.
-* Inspect backup archives and metadata.
-* Confirm Proxmox can enumerate the resulting backup files.
-* Monitor backup job failures through the existing monitoring stack where practical.
+## Recovery Verification
 
-### Phase 4 — Recovery Testing
+A real recovery test was performed using the September 8, 2026 backup of `infra-dns01` (VMID 202).
 
-* Restore at least one representative VM or LXC to a nonproduction test target.
-* Verify the restored guest boots successfully.
-* Verify network connectivity and expected services.
-* For application workloads, verify the application and persistent data.
-* Record the recovery procedure and observed recovery time.
+The backup was restored to a temporary LXC, VMID 220, on the Proxmox host using local LVM-thin storage. The restored container was intentionally kept isolated from the production network before it was started to prevent duplicate hostname/IP identity and accidental DNS service conflicts.
 
-### Phase 5 — Documentation
+### Restore Validation
 
-* Document the backup schedule.
-* Document retention policy.
-* Document backup storage architecture.
-* Document restore procedures.
-* Define recovery priorities.
-* Record recovery time observations.
-* Identify gaps requiring future work.
+The restored container was verified to contain:
 
-### Phase 6 — Future Resilience
+* A complete Debian filesystem.
+* The original `infra-dns01` hostname.
+* The AdGuard Home executable and systemd service.
+* The restored `AdGuardHome.yaml` configuration.
+* AdGuard Home persistent data, including query log, statistics database, filter data, and session database.
+* Normal base system services including SSH and systemd-managed services.
 
-After local backup and restore procedures are proven, evaluate:
+AdGuard Home reached application initialization during the test. Its subsequent failure was expected because the restored container had no network interface and the preserved configuration attempted to bind the application to its production address. The service journal reported `cannot assign requested address` when binding the Web/API listener.
 
-* Offsite backup copies.
-* Backup encryption.
-* Longer term retention.
-* Automated recovery testing.
-* Disaster recovery procedures for total NAS loss.
+This failure was an intentional consequence of network isolation, not evidence of a damaged backup. The restored application binary, configuration, and persistent data were present and readable.
+
+After verification, the temporary VMID 220 container was stopped and destroyed. The production `infra-dns01` container remained untouched.
+
+### Recovery Test Result
+
+**Restore verification: successful.**
+
+The test demonstrates that a Proxmox backup can be restored into a new guest and that the guest filesystem, application installation, configuration, and application state are recoverable. A production-network application failover was intentionally not attempted because doing so would have created a duplicate service identity.
+
+## Retention Policy
+
+The implemented retention policy is:
+
+| Rule | Value | Purpose |
+| --- | ---: | --- |
+| Keep last | 3 | Maintain several recent recovery points |
+| Keep weekly | 1 | Preserve an older weekly recovery point |
+| Keep monthly | 1 | Preserve an older monthly recovery point |
+
+Retention rules can overlap, so the actual number of retained archives is not necessarily five per workload. Calendar-based weekly and monthly rules may preserve recovery points that are older than the three most recent backups.
+
+## Recovery Procedure
+
+The general recovery procedure is:
+
+1. Identify the required VM or LXC and the appropriate backup recovery point.
+2. Confirm the backup archive is available on `nas-backup`.
+3. Restore the guest to the intended Proxmox node and storage.
+4. If restoring alongside the original guest, assign a temporary VMID and isolate or modify networking before starting it.
+5. Start the restored guest only after duplicate network identity risks have been addressed.
+6. Verify the guest operating system and expected application services.
+7. Verify application configuration and persistent data.
+8. Restore normal networking and production identity only when the original workload has been stopped or otherwise safely removed from service.
+9. Record the recovery result and any changes required to improve the procedure.
+
+The restore test demonstrated why network identity must be considered when recovering infrastructure services such as DNS.
 
 ## Recovery Objectives
 
-Initial targets will be established during the project rather than assumed in advance.
+The current architecture provides a nightly backup cadence, so the operational recovery point is generally bounded by the most recent successful scheduled backup. Exact application-level RPO depends on when the application's data was last written and captured by the guest backup.
 
-The project should document:
-
-* **RPO:** How much recent data the lab can afford to lose.
-* **RTO:** How long recovery of a critical workload should take.
-
-These values should reflect the actual lab's requirements and the capabilities of the backup architecture.
+RTO has not been established as a formal target. The completed restore test demonstrates that recovery is practical, but additional timed recovery exercises are required before committing to a specific RTO.
 
 ## Security Considerations
 
@@ -125,23 +148,38 @@ These values should reflect the actual lab's requirements and the capabilities o
 * Backup access should use dedicated permissions where supported.
 * Credentials and secrets must never be stored in this public repository.
 * Public documentation must omit private IP addresses, MAC addresses, and other unnecessary internal identifiers.
-* Offsite copies should be considered if the NAS becomes a single point of failure.
+* Restored infrastructure services must be isolated from production until duplicate identity and networking risks are addressed.
+* The NAS remains a local backup target and therefore a single-site failure domain.
+
+## Current Resilience Gaps and Future Work
+
+The local backup and restore workflow is now proven, but it is not yet a complete disaster-recovery architecture.
+
+Future work includes:
+
+* Offsite backup copies.
+* Evaluation of backup encryption.
+* Longer-term retention if required.
+* Timed recovery exercises to establish realistic RTO values.
+* Automated or periodic restore verification.
+* Disaster recovery procedures for total NAS loss.
+* Evaluation of Proxmox Backup Server when the lab's scale or recovery requirements justify a dedicated backup platform.
 
 ## Success Criteria
 
-The project is complete when:
+The project objectives are now met for the initial local backup implementation:
 
 * Critical workloads are covered by scheduled backups.
-* Retention is defined and verified.
+* Retention is defined and verified through an actual pruning cycle.
 * Backup jobs have been observed completing successfully.
-* At least one backup has been restored successfully.
-* Recovery steps are documented well enough to repeat the procedure without guesswork.
-* RPO and RTO targets are documented.
+* A representative LXC backup has been restored successfully.
+* The restored application's configuration and persistent state were verified.
+* Recovery steps and network-isolation considerations are documented.
 * Remaining resilience gaps are identified as future work.
 
 ## Current Status
 
-**Project initiated.** Backup automation, verification, and recovery testing remain in progress.
+**Initial Proxmox backup and recovery implementation complete.** Automated backups, retention, backup verification, and a representative restore test have been successfully implemented and validated.
 
 ## Public Documentation Policy
 

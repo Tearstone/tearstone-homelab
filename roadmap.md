@@ -44,13 +44,13 @@ Prometheus Alertmanager and Blackbox Exporter are intentionally deferred. Uptime
 - [x] Connect Zyxel NAS 326
 - [x] Configure NFS storage
 - [x] Benchmark NAS/NFS performance
-- [ ] Configure automated Proxmox backups
-- [ ] Implement backup verification
-- [ ] Document backup and recovery procedures
+- [x] Configure automated Proxmox backups
+- [x] Implement backup verification
+- [x] Document backup and recovery procedures
 
-**Current project:** Proxmox Backup and Disaster Recovery. The existing NAS/NFS infrastructure will be used as the initial backup target. The project will establish scheduled backups, retention, verification, restore testing, and documented recovery objectives.
+The initial Proxmox backup and disaster recovery implementation is complete. The cluster now performs nightly backups of the protected workload set to the existing NAS/NFS storage, with configured retention and a successful representative restore test. Offsite backup, longer-term resilience, and additional recovery testing remain future work.
 
-See [Backup and Recovery](docs/backup.md) for the project plan.
+See [Backup and Recovery](docs/backup.md) for the implemented architecture, retention policy, verification results, and recovery procedure.
 
 ## Phase 5 — Applications and Services
 
@@ -112,14 +112,15 @@ See [Backup and Recovery](docs/backup.md) for the project plan.
 - [x] Document network architecture
 - [x] Document service architecture
 - [x] Document storage architecture
-- [ ] Document backup architecture
+- [x] Document backup architecture
 - [ ] Document security architecture
 - [x] Maintain benchmark history
 - [x] Document Homepage deployment
 - [x] Document Uptime Kuma deployment
 - [x] Document monitoring architecture
 - [x] Define backup and recovery project plan
+- [x] Document backup and recovery procedures
 
 ## Notes
 
-The roadmap was updated on September 6, 2026 to reflect the current infrastructure and the start of the backup and recovery project. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, and Uptime Kuma availability monitoring are complete. The lab now has separate monitoring layers for infrastructure metrics and service availability. Backup automation and recovery validation are now the immediate infrastructure priority. High availability, centralized logging, network segmentation, and advanced security infrastructure remain future work.
+The roadmap was updated on September 9, 2026 to reflect completion of the initial Proxmox backup and recovery implementation. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, Uptime Kuma availability monitoring, and initial local backup/recovery capability are complete. The lab now has scheduled NAS-backed backups, retention/pruning, and a verified representative restore. High availability, centralized logging, network segmentation, offsite backup, and advanced security infrastructure remain future work.
