@@ -1,6 +1,166 @@
 # Architecture
 
-## Current Architecture
+## Layered Architecture
+
+The homelab is easiest to understand as a set of layers rather than as one large dependency graph. Each layer has a distinct responsibility, while the higher layers consume capabilities provided by the layers below them.
+
+```mermaid
+flowchart TB
+    Internet["Internet"]
+
+    subgraph Physical["1. Physical"]
+        Gateway["T-Mobile Gateway"]
+        Switch["NETGEAR GS108E"]
+        NAS["Zyxel NAS326"]
+        PVE01["HP EliteDesk 800 G5 Mini\npve01"]
+        PVE02["HP EliteDesk 800 G5 Mini\npve02"]
+    end
+
+    subgraph Network["2. Network"]
+        LAN["Home LAN / Ethernet"]
+        Bridge["Proxmox vmbr0"]
+        NFS["NFS shared storage"]
+    end
+
+    subgraph Virtualization["3. Virtualization"]
+        Cluster["Proxmox VE 9.x\nnexus cluster"]
+        VMs["Virtual Machines"]
+        LXCs["Linux Containers"]
+    end
+
+    subgraph Infrastructure["4. Infrastructure Services"]
+        DNS["AdGuard Home"]
+        Homepage["Homepage"]
+        Uptime["Uptime Kuma"]
+        Prometheus["Prometheus"]
+        Grafana["Grafana"]
+    end
+
+    subgraph Applications["5. Applications"]
+        Docker["lab-core01 / Docker"]
+        Web["prod-web01 / Web"]
+        Immich["Immich"]
+        Public["Public Websites"]
+    end
+
+    subgraph Data["6. Data"]
+        Media["Immich media"]
+        AppData["Application data"]
+        Config["Service configuration"]
+    end
+
+    subgraph Monitoring["7. Monitoring"]
+        Metrics["Metrics / Node Exporter"]
+        Availability["Availability / HTTP / ICMP"]
+        Alerts["Notifications"]
+    end
+
+    subgraph Backup["8. Backup & Recovery"]
+        Vzdump["Proxmox vzdump"]
+        Retention["Retention / pruning"]
+        Restore["Test restore"]
+    end
+
+    Internet --> Gateway
+    Gateway --> Switch
+    Switch --> LAN
+    Switch --> PVE01
+    Switch --> PVE02
+    Switch --> NAS
+    LAN --> Bridge
+    NAS --> NFS
+    PVE01 --> Cluster
+    PVE02 --> Cluster
+    Bridge --> Cluster
+    Cluster --> VMs
+    Cluster --> LXCs
+    VMs --> Infrastructure
+    VMs --> Applications
+    LXCs --> Infrastructure
+    LXCs --> Applications
+    Infrastructure --> Applications
+    Applications --> Data
+    Infrastructure --> Monitoring
+    Applications --> Monitoring
+    Data --> Vzdump
+    VMs --> Vzdump
+    LXCs --> Vzdump
+    Vzdump --> Retention
+    Retention --> Restore
+```
+
+This view is the primary conceptual map of the lab. It emphasizes **where a capability belongs** rather than showing every individual service-to-service connection.
+
+## Service and Monitoring View
+
+The infrastructure and application layers have several important relationships. This view isolates those relationships from the physical and virtualization details.
+
+```mermaid
+flowchart LR
+    Homepage["Homepage"]
+    Proxmox["Proxmox API\nread-only"]
+    DNS["AdGuard Home"]
+    Immich["Immich"]
+    Prometheus["Prometheus"]
+    Grafana["Grafana"]
+    Uptime["Uptime Kuma"]
+    Core["lab-core01\nDocker"]
+    Public["Public Websites"]
+    Internal["Internal Services"]
+    SMTP["Email Notifications"]
+
+    Homepage --> Proxmox
+    Homepage --> DNS
+    Homepage --> Immich
+    Homepage --> Prometheus
+    Homepage --> Grafana
+    Homepage --> Uptime
+    Homepage --> Core
+
+    Prometheus -->|"Metrics"| Grafana
+    Uptime -->|"Availability checks"| Prometheus
+    Uptime -->|"HTTP / ICMP"| Public
+    Uptime -->|"HTTP / ICMP"| Internal
+    Uptime -->|"SMTP alerts"| SMTP
+```
+
+Homepage is the operational navigation and summary layer. Prometheus and Grafana provide metrics and visualization, while Uptime Kuma provides independent availability monitoring and notifications.
+
+## Storage, Data, and Recovery View
+
+Storage is intentionally shown separately because the NAS serves several different purposes. The same physical storage platform should not be mentally treated as a single undifferentiated data store.
+
+```mermaid
+flowchart TB
+    NAS["Zyxel NAS326"]
+    NFS["NFS shared storage"]
+    Backup["Proxmox backup storage"]
+    Photo["Photo / media storage"]
+    AppStorage["Application storage"]
+    Core["lab-core01 / Docker"]
+    Immich["Immich"]
+    PVE["Proxmox cluster"]
+    Retention["Backup retention / pruning"]
+    Restore["Recovery test"]
+
+    NAS --> NFS
+    NFS --> Backup
+    NFS --> Photo
+    NFS --> AppStorage
+    PVE -->|"vzdump"| Backup
+    Backup --> Retention
+    Retention --> Restore
+    Core -->|"NFS"| Photo
+    Core -->|"NFS-backed storage"| AppStorage
+    Photo -->|"Read-only external library"| Immich
+    AppStorage -->|"Managed storage"| Immich
+```
+
+The NAS therefore acts as both a shared application-data platform and the initial local backup target. This is useful operationally, but it also means the NAS remains a disaster-recovery boundary: loss of the NAS would affect both application data and local backups. Offsite protection is therefore a future resilience priority.
+
+## Detailed Dependency View
+
+The following diagram preserves the detailed service relationships for troubleshooting and implementation work. It is intentionally more dense than the layered architecture above.
 
 ```mermaid
 graph TD
@@ -64,9 +224,9 @@ graph TD
     Uptime -->|"SMTP alerts"| SMTP["Google Workspace SMTP"]
 ```
 
-The homelab now consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. Dedicated Debian 13 LXCs provide the Homepage dashboard and Uptime Kuma availability monitoring used for navigation, operational status, and alerting.
+## Proxmox Nodes
 
-### Proxmox Nodes
+The homelab consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. Dedicated Debian 13 LXCs provide the Homepage dashboard and Uptime Kuma availability monitoring used for navigation, operational status, and alerting.
 
 | Node | CPU | RAM | Local Storage |
 | ---- | --- | --- | ------------- |
@@ -83,7 +243,7 @@ The nodes are intentionally compact and low-power compared with traditional ente
 
 The Zyxel NAS326 provides network storage using NFS. The NAS remains an important shared storage tier for application data, backups, and Immich media.
 
-### Workload Placement
+## Workload Placement
 
 `lab-core01` is a dedicated Docker application host and currently runs Immich and other home lab application workloads. It was migrated from `pve01` to `pve02` following a controlled workload placement benchmark. Its 80 GB system disk now resides on the `nvme-lvm` storage tier on `pve02`.
 
@@ -93,7 +253,7 @@ The existing NAS photo collection is presented to Immich as a read-only External
 
 Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics. Uptime Kuma independently monitors service availability and public endpoints and sends email notifications when monitored services fail or recover.
 
-### Homepage Dashboard
+## Homepage Dashboard
 
 `infra-homepage01` is a dedicated Debian 13 LXC providing the Homepage application. Homepage is installed natively on the LXC rather than through Docker or another nested container runtime.
 
@@ -121,7 +281,7 @@ The AdGuard integration uses the `/control/stats` API and HTTP Basic Authenticat
 
 API secrets are supplied through Homepage environment variables. The local `.env` file is excluded from Git and is not part of the public documentation repository. A sanitized example configuration is maintained at `docs/homepage-services.yaml.example` with private host addresses and credentials replaced by placeholders.
 
-### Uptime Kuma Availability Monitoring
+## Uptime Kuma Availability Monitoring
 
 `infra-uptime01` is a dedicated Debian 13 LXC providing Uptime Kuma. Uptime Kuma is installed natively rather than through Docker and runs as a systemd service under the dedicated `uptime-kuma` account.
 
@@ -145,7 +305,7 @@ Monitoring uses a 10 minute interval with two retries before a service is consid
 
 Uptime Kuma is integrated with Homepage through a dedicated `Lab Status` status page. Homepage displays the aggregate availability state alongside the existing Prometheus, Grafana, Proxmox, AdGuard, and Immich widgets.
 
-### Homepage Service
+## Homepage Service
 
 Homepage runs as a native systemd service on `infra-homepage01`:
 
