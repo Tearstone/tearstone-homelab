@@ -2,6 +2,13 @@
 
 ## 2026-09-09
 
+### Architecture Documentation
+
+* Reworked `docs/architecture.md` around a layered architecture model: Physical, Network, Virtualization, Infrastructure Services, Applications, Data, Monitoring, and Backup & Recovery.
+* Added separate service/monitoring and storage/data/recovery views so the major dependency relationships can be understood without relying on one dense diagram.
+* Retained the detailed dependency diagram as a troubleshooting and implementation reference rather than using it as the primary architecture view.
+* Clarified the NAS role as both shared application-data storage and the initial local backup target, with offsite protection identified as the remaining disaster-recovery boundary.
+
 ### Backup and Recovery
 
 * Completed the initial Proxmox Backup and Disaster Recovery implementation using the existing Zyxel NAS326 NFS storage.
