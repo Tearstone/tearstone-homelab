@@ -1,138 +1,124 @@
 # Prometheus
 
+## Purpose
+
+Prometheus collects and stores time-series metrics from the home lab. It scrapes Node Exporter on the monitored Linux hosts and supplies the metrics queried by Grafana.
+
 ## Installation
 
-Installed from Debian packages.
+Install Prometheus from the Debian package repository and enable the service:
 
 ```bash
+apt update
 apt install -y curl wget vim htop net-tools unzip
-useradd prometheus
-passwd prometheus
-mkdir /etc/prometheus
-mkdir /var/lib/prometheus
-chown prometheus:prometheus /etc/prometheus
-chown prometheus:prometheus /var/lib/prometheus
 apt policy prometheus
 apt install -y prometheus
-systemctl start prometheus
-systemctl status prometheus
+systemctl enable --now prometheus
 ```
 
-Validation/Troubleshooting
-
-Log check for errors`
-```bash
-journalctl -u prometheus -n 100 --no-pager | grep panic
-```
-
-Validate local Prometheus server is presenting metrics
-```bash
-curl -X POST http://localhost:9090/-/reload
-```
-
-## Current Targets
-
-- pve01 - physical node - Proxmox
-- pve02 - physical node - Proxmox
-- infra-prometheus01 - LXC - Debian 13
-- infra-grafana01 - LXC - Debian 13
-- lab-kali01 - VM - Kali Linux
-- lab-core01 - VM - Debian 13
-- prod-web01 - VM - Debian 13
-
-## Validation
-
-http://localhost:9090 - Local prometheus LXC
-http://{host-ip}:9100 - Remote targets running node exporter
-
-Status → Targets
-
-Should show all targets UP.
+The package creates the Prometheus service account, configuration directory, data directory, and systemd unit.
 
 ## Configuration
 
-Location
+The primary configuration file is:
 
+```text
 /etc/prometheus/prometheus.yml
+```
 
-``` yaml
-# Sample config for Prometheus.
+Sanitized example:
 
+```yaml
 global:
-  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
-  # scrape_timeout is set to the global default (10s).
-
-  # Attach these labels to any time series or alerts when communicating with
-  # external systems (federation, remote storage, Alertmanager).
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-      monitor: 'example'
+    monitor: homelab
 
-# Alertmanager configuration
-alerting:
-  alertmanagers:
-  - static_configs:
-    - targets: ['localhost:9093']
-
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  # Add rule files when Prometheus alerting is implemented.
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-
-#
-# Prometheus Server
-#
-  - job_name: 'prometheus'
-
+  - job_name: prometheus
     scrape_interval: 5s
     scrape_timeout: 5s
     static_configs:
       - targets: ['localhost:9090']
 
-#
-# Proxmox Hypervisor
-#
-
   - job_name: proxmox
     static_configs:
-      - targets: ['192.168.x.x:9100']
+      - targets: ['<PVE01_ADDRESS>:9100']
         labels:
           name: pve01
-
-      - targets: ['192.168.x.x:9100'[
+      - targets: ['<PVE02_ADDRESS>:9100']
         labels:
           name: pve02
 
-#
-# Linux Virtual Machines
-#
-
   - job_name: linux-vm
     static_configs:
-      - targets: ['192.168.x.x:9100']
+      - targets: ['<LAB_CORE01_ADDRESS>:9100']
         labels:
           name: lab-core01
-
-      - targets: ['192.168.x.x:9100']
+      - targets: ['<LAB_KALI01_ADDRESS>:9100']
         labels:
           name: lab-kali01
-
-      - targets: ['192.168.x.x:9100']
+      - targets: ['<PROD_WEB01_ADDRESS>:9100']
         labels:
           name: prod-web01
 
-#
-# Linux Containers (LXC)
-#
-
   - job_name: linux-lxc
     static_configs:
-      - targets: ['192.168.x.x:9100']
-        labels: 
+      - targets: ['<INFRA_GRAFANA01_ADDRESS>:9100']
+        labels:
           name: infra-grafana01
+      - targets: ['<INFRA_VPN01_ADDRESS>:9100']
+        labels:
+          name: infra-vpn01
 ```
+
+Check the configuration before reloading Prometheus:
+
+```bash
+promtool check config /etc/prometheus/prometheus.yml
+systemctl reload prometheus
+```
+
+## Validation
+
+Verify the systemd service, health endpoint, metrics endpoint, and recent logs:
+
+```bash
+systemctl status prometheus --no-pager
+curl http://localhost:9090/-/healthy
+curl http://localhost:9090/metrics
+journalctl -u prometheus -n 100 --no-pager
+```
+
+Open `http://<PROMETHEUS_HOST>:9090`, select **Status → Targets**, and confirm all expected targets report `UP`.
+
+## Current Targets
+
+* `pve01` — physical Proxmox node
+* `pve02` — physical Proxmox node
+* `infra-prometheus01` — Debian 13 LXC
+* `infra-grafana01` — Debian 13 LXC
+* `infra-vpn01` — Debian 13 LXC
+* `lab-kali01` — Kali Linux VM
+* `lab-core01` — Debian 13 VM
+* `prod-web01` — Debian 13 VM
+
+## Monitoring and Integrations
+
+Grafana uses Prometheus as its metrics data source. Homepage queries the Prometheus targets API to display target counts, and Uptime Kuma independently checks the Prometheus `/-/healthy` endpoint.
+
+## Security
+
+* Prometheus is an internal monitoring service and should not be exposed directly to the public internet.
+* Private target addresses are replaced with descriptive placeholders in this repository.
+* Authentication secrets and environment-specific configuration remain outside public documentation.
+
+## Lessons Learned
+
+* Validate configuration with `promtool` before reloading the service.
+* A local health check confirms the server is running, while **Status → Targets** confirms end-to-end scrape health.
+* Node Exporter and Prometheus provide metrics; Uptime Kuma remains the independent availability and notification layer.

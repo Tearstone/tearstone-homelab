@@ -20,6 +20,7 @@ flowchart TB
         LAN["Home LAN / Ethernet"]
         Bridge["Proxmox vmbr0"]
         NFS["NFS shared storage"]
+        Tailnet["Tailscale tailnet"]
     end
 
     subgraph Virtualization["3. Virtualization"]
@@ -34,6 +35,7 @@ flowchart TB
         Uptime["Uptime Kuma"]
         Prometheus["Prometheus"]
         Grafana["Grafana"]
+        VPN["Tailscale subnet router"]
     end
 
     subgraph Applications["5. Applications"]
@@ -62,6 +64,7 @@ flowchart TB
     end
 
     Internet --> Gateway
+    Internet --> Tailnet
     Gateway --> Switch
     Switch --> LAN
     Switch --> PVE01
@@ -72,6 +75,8 @@ flowchart TB
     PVE01 --> Cluster
     PVE02 --> Cluster
     Bridge --> Cluster
+    Tailnet --> VPN
+    VPN --> LAN
     Cluster --> VMs
     Cluster --> LXCs
     VMs --> Infrastructure
@@ -104,10 +109,12 @@ flowchart LR
     Prometheus["Prometheus"]
     Grafana["Grafana"]
     Uptime["Uptime Kuma"]
+    Tailscale["Tailscale\nsubnet routing"]
     Core["lab-core01\nDocker"]
     Public["Public Websites"]
     Internal["Internal Services"]
     SMTP["Email Notifications"]
+    Phones["Household phones\nover cellular"]
 
     Homepage --> Proxmox
     Homepage --> DNS
@@ -115,6 +122,7 @@ flowchart LR
     Homepage --> Prometheus
     Homepage --> Grafana
     Homepage --> Uptime
+    Homepage --> Tailscale
     Homepage --> Core
 
     Prometheus -->|"Metrics"| Grafana
@@ -122,6 +130,8 @@ flowchart LR
     Uptime -->|"HTTP / ICMP"| Public
     Uptime -->|"HTTP / ICMP"| Internal
     Uptime -->|"SMTP alerts"| SMTP
+    Phones -->|"Tailnet"| Tailscale
+    Tailscale -->|"Private-LAN subnet route"| Internal
 ```
 
 Homepage is the operational navigation and summary layer. Prometheus and Grafana provide metrics and visualization, while Uptime Kuma provides independent availability monitoring and notifications.
@@ -190,6 +200,7 @@ graph TD
             Prometheus["infra-prometheus01\nPrometheus"]
             Homepage["infra-homepage01\nHomepage"]
             Uptime["infra-uptime01\nUptime Kuma"]
+            VPN["infra-vpn01\nTailscale subnet router"]
         end
 
         PVE --> Kali
@@ -198,6 +209,7 @@ graph TD
         PVE --> Prometheus
         PVE --> Homepage
         PVE --> Uptime
+        PVE --> VPN
         PVE02 --> Core
         PVE02 --> Web
     end
@@ -216,8 +228,13 @@ graph TD
     Homepage -->|"Dashboard links / widgets"| Grafana
     Homepage -->|"Dashboard links / widgets"| Prometheus
     Homepage -->|"Uptime Kuma status widget"| Uptime
+    Homepage -->|"Management link"| VPN
     Homepage -->|"Dashboard links"| Core
 
+    Phones["Household phones"] -->|"Tailscale over cellular"| VPN
+    VPN -->|"Approved private-LAN route"| Internal
+    VPN -->|"Node Exporter metrics"| Prometheus
+    Uptime -->|"ICMP Ping"| VPN
     Uptime -->|"Availability checks"| Prometheus
     Uptime -->|"Availability checks"| Public["Public Websites"]
     Uptime -->|"Availability checks"| Internal["Internal Services"]
@@ -226,7 +243,7 @@ graph TD
 
 ## Proxmox Nodes
 
-The homelab consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. Dedicated Debian 13 LXCs provide the Homepage dashboard and Uptime Kuma availability monitoring used for navigation, operational status, and alerting.
+The homelab consists of a two-node Proxmox VE cluster named `nexus` running on two HP EliteDesk 800 G5 Mini systems. Dedicated Debian 13 LXCs provide the Homepage dashboard, Uptime Kuma availability monitoring, and Tailscale remote access used for navigation, operational status, alerting, and secure access from outside the home network.
 
 | Node | CPU | RAM | Local Storage |
 | ---- | --- | --- | ------------- |
@@ -253,6 +270,36 @@ The existing NAS photo collection is presented to Immich as a read-only External
 
 Prometheus collects metrics from the Linux systems using Node Exporter, while Grafana provides visualization of the collected metrics. Uptime Kuma independently monitors service availability and public endpoints and sends email notifications when monitored services fail or recover.
 
+## Tailscale Remote Access
+
+CT 205 `infra-vpn01` is a dedicated Debian 13 unprivileged LXC on `pve01`. It runs Tailscale 1.102.4 and advertises the private LAN as an approved subnet route so enrolled devices can reach internal services.
+
+| Setting | Value |
+| --- | --- |
+| CPU | 1 core |
+| Memory | 512 MB |
+| Swap | 512 MB |
+| Root disk | 4 GB |
+| Nesting | Enabled |
+| `onboot` | Enabled |
+| IPv4 address | `<VPN_HOST_IP>/<PREFIX>` |
+| Gateway | `<LAN_GATEWAY>` |
+| DNS server | `<INTERNAL_DNS_SERVER>` |
+| Search domain | `<INTERNAL_SEARCH_DOMAIN>` |
+
+Tailscale uses `/dev/net/tun`, which is passed into the unprivileged LXC with the following Proxmox configuration:
+
+```text
+lxc.cgroup2.devices.allow: c 10:200 rwm
+lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+```
+
+IPv4 forwarding is persistently enabled with `net.ipv4.ip_forward=1`. The subnet route was advertised by `infra-vpn01` and explicitly approved in the Tailscale administration console.
+
+Two household phones are enrolled in the tailnet, and full access to the routed LAN is intentional for those trusted devices. Remote access was validated over cellular service, including successful access to Prometheus, Uptime Kuma, and Immich.
+
+`infra-vpn01` runs `prometheus-node-exporter` for system metrics and is monitored by Uptime Kuma with an ICMP Ping monitor. Homepage provides a Tailscale tile under Management for access to the Tailscale administration interface.
+
 ## Homepage Dashboard
 
 `infra-homepage01` is a dedicated Debian 13 LXC providing the Homepage application. Homepage is installed natively on the LXC rather than through Docker or another nested container runtime.
@@ -269,7 +316,7 @@ Homepage 2.1.2
 
 The LXC is allocated 512 MB RAM and 512 MB swap. A temporary increase to 1 GB RAM was required to complete the Next.js production build; the allocation was reduced to 512 MB after installation and validation. The build required `NODE_OPTIONS="--max-old-space-size=768"` to provide sufficient Node.js heap during compilation. The additional memory is a build-time requirement; normal Homepage operation remains at 512 MB.
 
-Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Uptime Kuma, Portainer, AdGuard Home, and Immich.
+Homepage is organized into Infrastructure, Monitoring, Management, and Applications groups. The current dashboard provides links to Proxmox, the Zyxel NAS, NETGEAR switch, Grafana, Prometheus, Uptime Kuma, Portainer, AdGuard Home, Tailscale, and Immich.
 
 The active widgets are intentionally limited to useful operational information rather than enabling every widget supported by Homepage. Current widgets provide cluster statistics from Proxmox, DNS statistics from AdGuard Home, application statistics from Immich, Prometheus target health, and aggregate Uptime Kuma availability status.
 
@@ -436,4 +483,4 @@ graph TD
 
 ## Public Documentation Policy
 
-This public repository intentionally omits private IP addresses, MAC addresses, serial numbers, internal DNS names, credentials, API token secrets, and other unnecessary infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are useful without exposing the lab's actual addressing scheme. Homepage and Uptime Kuma configuration examples use placeholders for private host addresses and environment variables for secrets.
+This public repository intentionally omits private IP addresses, private subnet ranges, gateways, internal DNS servers and names, MAC addresses, serial numbers, credentials, API token secrets, and other sensitive infrastructure identifiers. Architecture, service relationships, storage paths, and benchmark results are retained because they are operationally useful. Network values are represented by descriptive placeholders, and configuration examples use environment variables for secrets.

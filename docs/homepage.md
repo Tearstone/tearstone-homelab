@@ -23,8 +23,8 @@ The dashboard is organized into four service groups:
 | Group | Services |
 | --- | --- |
 | Infrastructure | Proxmox, ZyXEL NAS326, NETGEAR GS108Ev4 |
-| Monitoring | Prometheus, Grafana |
-| Management | AdGuard, Portainer |
+| Monitoring | Uptime Kuma, Prometheus, Grafana |
+| Management | AdGuard, Portainer, Tailscale |
 | Applications | Immich |
 
 The service order is intentional. Infrastructure provides the underlying platform, Monitoring provides operational visibility, Management provides administration tools, and Applications contains user facing services.
@@ -69,6 +69,10 @@ The AdGuard widget uses the `/control/stats` API with HTTP Basic Authentication 
 ### Immich
 
 The Immich widget uses a dedicated API key and displays application statistics including users, photos, videos, and storage usage.
+
+## Tailscale Management Link
+
+The Management group includes a Tailscale tile that links to the Tailscale administration interface. The tile provides an operational shortcut for reviewing the tailnet and the approved subnet route advertised by `infra-vpn01`; it does not embed credentials or private Tailscale configuration in Homepage.
 
 ## Configuration
 

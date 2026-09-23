@@ -2,67 +2,110 @@
 
 ## Purpose
 
-Uptime Kuma provides service availability monitoring and email alerting for the home lab. It complements Prometheus and Grafana by monitoring whether infrastructure, applications, and public endpoints are available rather than collecting performance metrics.
+Uptime Kuma provides service availability monitoring and email alerting for the home lab. It complements Prometheus and Grafana by checking whether infrastructure, applications, and public endpoints are available rather than collecting performance metrics.
 
-## Deployment
+The service runs natively on the dedicated `infra-uptime01` Debian 13 unprivileged LXC. The deployment uses Uptime Kuma 2.0.0, Node.js 22.23.2 LTS, SQLite, and TCP port 3001.
 
-Uptime Kuma is hosted on the dedicated `infra-uptime01` Debian 13 LXC.
+## Installation
 
-| Component | Value |
-| --- | --- |
-| Uptime Kuma | 2.0.0 |
-| Node.js | 22.23.2 LTS |
-| Database | SQLite |
-| Web port | 3001 |
-| Installation | Native Linux installation |
-| Service account | `uptime-kuma` |
-| Service manager | systemd |
+Install Node.js, Git, ICMP tooling, and capability management:
 
-Detailed host and deployment information is documented in [infra-uptime01](../systems/infra-uptime01.md).
+```bash
+apt update
+apt install -y curl ca-certificates git iputils-ping libcap2-bin
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+```
 
-## Monitoring Model
+Create the service account and install Uptime Kuma 2.0.0:
 
-The initial configuration uses a 10 minute heartbeat interval and two retries. This is intentionally sized for a non-critical home lab.
+```bash
+useradd --system --home-dir /opt/uptime-kuma --shell /usr/sbin/nologin uptime-kuma
+git clone --branch 2.0.0 --depth 1 https://github.com/louislam/uptime-kuma.git /opt/uptime-kuma
+cd /opt/uptime-kuma
+npm run setup
+chown -R uptime-kuma:uptime-kuma /opt/uptime-kuma
+```
 
-### Infrastructure
+Allow the non-root service account to perform ICMP checks without making the LXC privileged:
 
-ICMP Ping monitors are used for infrastructure such as the Proxmox nodes. The LXC remains unprivileged and the `ping` executable has the required `cap_net_raw` file capability.
+```bash
+setcap cap_net_raw=ep /usr/bin/ping
+getcap /usr/bin/ping
+```
 
-### Internal Services
+Create `/etc/systemd/system/uptime-kuma.service`:
 
-HTTP(s) monitors are used for application services. Dedicated health endpoints are preferred when available.
+```ini
+[Unit]
+Description=Uptime Kuma
+After=network-online.target
+Wants=network-online.target
 
-Prometheus is monitored through `/-/healthy`. Portainer is monitored over HTTPS with TLS validation disabled for the internal monitor because its certificate is self-signed.
+[Service]
+Type=simple
+User=uptime-kuma
+Group=uptime-kuma
+WorkingDirectory=/opt/uptime-kuma
+ExecStart=/usr/bin/npm run start-server
+Restart=on-failure
+RestartSec=5
 
-### Public Websites
+[Install]
+WantedBy=multi-user.target
+```
 
-Uptime Kuma monitors the public HTTPS endpoints for:
+Enable the service:
 
-* `tearstone.com`
-* `rvtravelbug.com`
-* `rsanderlin.com`
+```bash
+systemctl daemon-reload
+systemctl enable --now uptime-kuma
+```
 
-Public certificate validation remains enabled for these monitors.
+## Configuration
 
-## Notifications
+The initial monitoring policy uses a 10-minute heartbeat interval and two retries before declaring a monitor unavailable.
 
-Email notifications are sent through Google Workspace SMTP using TLS/STARTTLS on port 587. The SMTP account uses a Google application-specific password. Credentials are not stored in the public repository.
+* ICMP Ping monitors cover infrastructure, including the Proxmox nodes and `infra-vpn01`.
+* HTTP(S) monitors cover internal application services.
+* Prometheus uses its `/-/healthy` endpoint.
+* The internal Portainer monitor ignores certificate validation because its endpoint uses a self-signed certificate.
+* Public HTTPS monitors cover `tearstone.com`, `rvtravelbug.com`, and `rsanderlin.com` with certificate validation enabled.
+* Email notifications use Google Workspace SMTP with TLS/STARTTLS on port 587 and an application-specific password.
 
-## Homepage Integration
+SQLite is used for the current home-lab workload. Credentials and private monitor addresses remain outside this repository.
 
-A `Lab Status` Uptime Kuma status page provides the data source for the native Uptime Kuma widget on the Homepage dashboard. Uptime Kuma is displayed in the Homepage Monitoring group using the `uptime-kuma` Dashboard Icons asset.
+## Validation
+
+Verify the service, listener, local web response, non-root ICMP capability, and logs:
+
+```bash
+systemctl status uptime-kuma --no-pager
+ss -lntp | grep ':3001'
+curl --head http://localhost:3001
+sudo -u uptime-kuma ping -c 1 <INTERNAL_HOST>
+journalctl -u uptime-kuma -n 100 --no-pager
+```
+
+Use the Uptime Kuma interface to send a notification test and confirm every configured monitor reports the expected state.
+
+## Monitoring and Integrations
+
+The `Lab Status` status page supplies aggregate availability data to the native Uptime Kuma widget on Homepage. Uptime Kuma appears in the Homepage Monitoring group.
+
+`infra-vpn01` is monitored with ICMP Ping, providing an availability signal for the Tailscale subnet-router LXC independently of the Node Exporter metrics collected by Prometheus.
 
 ## Security
 
 * Uptime Kuma runs as a dedicated non-login system account.
-* The LXC is unprivileged.
-* No Docker layer is used for the Uptime Kuma deployment.
-* SMTP credentials and other secrets remain outside public documentation.
-* Private network addresses are excluded from the public repository.
+* The LXC remains unprivileged.
+* Raw-socket capability is assigned only to `/usr/bin/ping`, not to the entire container.
+* SMTP credentials, application passwords, and private monitor addresses are excluded from the public repository.
+* Public TLS validation remains enabled; exceptions are limited to specific trusted internal endpoints using self-signed certificates.
 
 ## Lessons Learned
 
 * Uptime Kuma provides a useful availability layer alongside Prometheus and Grafana.
-* Health endpoints are preferable to simple port checks when an application exposes them.
-* Internal self-signed certificates can be monitored by selectively disabling TLS validation for the affected monitor.
-* SQLite is sufficient for the current home lab workload.
+* Dedicated health endpoints are more meaningful than simple port checks when an application exposes them.
+* An unprivileged LXC can perform ICMP monitoring when the `ping` executable has `cap_net_raw`.
+* SQLite is sufficient for the current home-lab monitoring workload.

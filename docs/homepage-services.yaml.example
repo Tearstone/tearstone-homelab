@@ -50,6 +50,10 @@
           url: http://ADGUARD_HOST
           username: ADGUARD_USERNAME
           password: {{HOMEPAGE_VAR_ADGUARD_PASSWORD}}
+    - Tailscale:
+        icon: tailscale.png
+        href: https://login.tailscale.com/admin/machines
+        description: Remote access management
 
 - Applications:
     - Immich:

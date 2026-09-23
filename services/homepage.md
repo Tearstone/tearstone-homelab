@@ -2,82 +2,112 @@
 
 ## Purpose
 
-Homepage provides a centralized dashboard for navigating and viewing the status of lab services. It is hosted on the dedicated `infra-homepage01` LXC container.
+Homepage provides a centralized dashboard for navigating and viewing the status of lab services. It is hosted on the dedicated `infra-homepage01` Debian 13 LXC.
 
 ![Nexus Lab Homepage](/images/homepage.jpg)
 
-## Deployment
+## Installation
 
-Homepage is installed directly on Debian GNU/Linux 13 rather than running inside Docker.
+Homepage 2.1.2 is installed directly from source rather than through Docker. The runtime uses Node.js 22.23.2 LTS, npm 10.9.8, and pnpm 10.34.5.
 
-Application:
-- Homepage 2.1.2
+Install the runtime and build prerequisites:
 
-Runtime:
-- Node.js 22.23.2 LTS
-- npm 10.9.8
-- pnpm 10.34.5
-
-Installation path:
-
-```text
-/opt/homepage/homepage
+```bash
+apt update
+apt install -y curl ca-certificates git
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+npm install --global pnpm@10.34.5
 ```
 
-Configuration path:
+Clone, install, and build Homepage:
 
-```text
-/opt/homepage/homepage/config
+```bash
+mkdir -p /opt/homepage
+git clone --branch v2.1.2 --depth 1 https://github.com/gethomepage/homepage.git /opt/homepage/homepage
+cd /opt/homepage/homepage
+pnpm install --frozen-lockfile
+cp -a src/skeleton/. config/
+NODE_OPTIONS="--max-old-space-size=768" pnpm build
 ```
 
-## Dashboard Services
+The LXC was temporarily increased from 512 MB to 1 GB RAM for the production build and returned to 512 MB afterward.
 
-The dashboard currently provides links and selected live widgets for:
+Create `/etc/systemd/system/homepage.service`:
+
+```ini
+[Unit]
+Description=Homepage dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/homepage/homepage
+Environment=NODE_ENV=production
+Environment=HOMEPAGE_ALLOWED_HOSTS=<HOMEPAGE_HOST>:3000
+ExecStart=/usr/bin/pnpm start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable the service:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now homepage
+```
+
+## Configuration
+
+Homepage configuration is stored in `/opt/homepage/homepage/config`. The active `services.yaml` defines four service groups:
 
 | Group | Services |
 | --- | --- |
 | Infrastructure | Proxmox, Zyxel NAS326, NETGEAR GS108Ev4 |
 | Monitoring | Uptime Kuma, Grafana, Prometheus |
-| Management | Portainer, AdGuard |
+| Management | Portainer, AdGuard, Tailscale |
 | Applications | Immich |
 
-## Uptime Kuma Integration
+The live configuration contains private service addresses and credentials and is not committed. A sanitized example is maintained at [`docs/homepage-services.yaml.example`](../docs/homepage-services.yaml.example).
 
-Homepage integrates with the Uptime Kuma instance hosted on `infra-uptime01`.
+Homepage automatically reloads YAML configuration changes, so routine dashboard edits do not require a service restart.
 
-The dashboard uses the native Uptime Kuma service widget and retrieves aggregate monitor status from the Uptime Kuma `Lab Status` status page.
+## Validation
 
-The widget displays availability information for the monitors selected for the status page, providing a quick view of lab and public service health directly from the main dashboard.
+Verify the service, listener, and local HTTP response:
 
-The Uptime Kuma service entry uses the `uptime-kuma` Dashboard Icons asset.
+```bash
+systemctl status homepage --no-pager
+ss -lntp | grep ':3000'
+curl --head http://localhost:3000
+journalctl -u homepage -n 100 --no-pager
+```
 
-The live Homepage configuration contains the Uptime Kuma status page URL and other private service addresses. Those values are intentionally excluded from this public repository.
+Open `http://<HOMEPAGE_HOST>:3000` and confirm each group, service link, and configured widget loads successfully.
 
-## Proxmox Widget
+## Monitoring and Integrations
 
-Homepage uses a dedicated Proxmox API token to retrieve read only cluster information.
+The Proxmox widget uses a dedicated read-only `homepage@pam` API identity with a privilege-separated token and the `PVEAuditor` role. It displays cluster VM and LXC counts plus CPU and memory utilization.
 
-The widget displays:
+The Uptime Kuma widget reads aggregate availability from the `Lab Status` status page. The Prometheus widget displays target counts. AdGuard and Immich use their application APIs for summary statistics.
 
-- Running and total QEMU VM counts
-- Running and total LXC counts
-- Cluster CPU utilization
-- Cluster memory utilization
+The Management group includes a Tailscale tile linking to the Tailscale administration interface so enrolled devices and the sanitized private-LAN route can be reviewed.
 
-The CPU and memory values are cluster wide because no individual Proxmox node is specified in the widget configuration.
+## Security
 
-The API identity is assigned the `PVEAuditor` role through the dedicated `api-readonly` group. Privilege separation is enabled for the API token.
+* Proxmox access is read-only and uses a privilege-separated API token.
+* API secrets are supplied through Homepage environment variables rather than committed YAML.
+* Private host addresses, API tokens, passwords, and other internal identifiers are excluded from the public repository.
+* The public example uses placeholders for environment-specific values.
 
-## Resource Allocation
+## Lessons Learned
 
-The LXC is allocated 512 MB RAM and 512 MB swap. The RAM allocation was temporarily increased to 1 GB during the initial Next.js production build because the build process exceeded the smaller Node.js heap limit. The container was returned to 512 MB after the build completed.
-
-## Configuration Management
-
-Homepage automatically reloads YAML configuration changes, allowing dashboard updates without a manual application restart.
-
-The live configuration contains private network addresses and API credentials. Those values are intentionally excluded from this public repository.
-
-## Public Documentation Policy
-
-API token secrets, passwords, private IP addresses, MAC addresses, and other internal operational details are not published in this repository.
+* Homepage runs comfortably with 512 MB RAM after the production build is complete.
+* The Next.js build required a temporary memory increase and an explicit Node.js heap limit.
+* Widgets are most useful when they provide concise operational status rather than duplicate full application dashboards.
+* A sanitized example preserves configuration methodology without exposing the private network.

@@ -58,6 +58,8 @@ Current metrics include:
 * System uptime
 * Load average
 
+`infra-vpn01` runs the Debian `prometheus-node-exporter` package. Prometheus scrapes the Tailscale subnet router on TCP port 9100, providing host-level CPU, memory, filesystem, network, uptime, and load metrics for the remote-access service.
+
 ### Uptime Kuma
 
 Uptime Kuma provides availability monitoring and notification for infrastructure, internal services, and public websites.
@@ -80,6 +82,8 @@ The configuration is intentionally sized for a home lab rather than a production
 ### Infrastructure
 
 ICMP Ping monitors are used for infrastructure systems such as the Proxmox nodes.
+
+`infra-vpn01` is monitored with an ICMP Ping monitor so loss of the Tailscale subnet-router LXC is visible independently of Prometheus metrics collection.
 
 The `infra-uptime01` LXC remains unprivileged. Debian's `iputils-ping` executable did not have the required raw socket capability in the container, so `cap_net_raw` was assigned to `/usr/bin/ping`. ICMP monitoring was then verified successfully using the non-root `uptime-kuma` service account.
 
@@ -113,7 +117,7 @@ A Uptime Kuma status page is used as the data source for the Homepage Uptime Kum
 
 ## Data Flow
 
-1. Node Exporter exposes Linux metrics on port **9100**.
+1. Node Exporter, including the instance on `infra-vpn01`, exposes Linux metrics on port **9100**.
 2. Prometheus scrapes those metrics at regular intervals.
 3. Prometheus stores the metrics in its time series database.
 4. Grafana queries Prometheus.

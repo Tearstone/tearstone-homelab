@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-09-22
+
+### Tailscale Remote Access
+
+* Provisioned CT 205 `infra-vpn01` as a Debian 13 unprivileged LXC on `pve01` with 1 core, 512 MB RAM, 512 MB swap, a 4 GB root disk, nesting enabled, and start-at-boot enabled.
+* Assigned a static private-LAN address with the lab gateway, internal DNS server, and internal search domain; exact network identifiers remain outside the public repository.
+* Installed Tailscale 1.102.4 directly in the LXC.
+* Passed `/dev/net/tun` into the unprivileged container using the required cgroup device allowance and bind mount.
+* Enabled persistent IPv4 forwarding.
+* Advertised and approved the private-LAN subnet route.
+* Enrolled two household phones with intentional full-LAN access.
+* Validated remote phone access over cellular service to Prometheus, Uptime Kuma, and Immich.
+
+### Monitoring and Homepage Integration
+
+* Installed `prometheus-node-exporter` on `infra-vpn01` for operating-system metrics.
+* Added Uptime Kuma ICMP Ping monitoring for the Tailscale subnet-router LXC.
+* Added a Tailscale tile under the Homepage Management group.
+
+### Documentation
+
+* Added `systems/infra-vpn01.md` with the container inventory, network configuration, TUN passthrough, forwarding, validation, monitoring, and trust-policy details.
+* Added `services/tailscale.md` documenting the remote-access service and subnet-routing model.
+* Updated the architecture, monitoring, Node Exporter, Uptime Kuma, Homepage, example Homepage configuration, and README documentation for the completed deployment.
+* Preserved the existing layered architecture, detailed dependency, storage, benchmark, backup, and historical documentation while making additive updates for `infra-vpn01`.
+
+### Documentation Standards and Sanitization
+
+* Removed the private subnet, host address, gateway, internal DNS server, and internal search domain from the public documentation and replaced operational examples with descriptive placeholders.
+* Restored the repository-wide policy that private network identifiers remain outside the public repository with no `infra-vpn01` exception.
+* Expanded `services/tailscale.md` with repeatable Proxmox, Debian, forwarding, route-advertisement, monitoring, and validation steps.
+* Standardized every document under `services/` around Purpose, Installation, Configuration, Validation, Monitoring and Integrations, Security, and Lessons Learned sections.
+* Repaired and expanded the sanitized Prometheus configuration example, including the `infra-vpn01` Node Exporter target.
+* Updated `roadmap.md` with the completed Tailscale deployment, cellular validation, monitoring, Homepage integration, documentation milestone, and future access-control requirement.
+
 ## 2026-09-09
 
 ### Architecture Documentation

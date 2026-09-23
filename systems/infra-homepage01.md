@@ -59,6 +59,7 @@ Homepage is organized into the following groups:
 
 ### Monitoring
 
+- Uptime Kuma
 - Grafana
 - Prometheus
 
@@ -66,6 +67,7 @@ Homepage is organized into the following groups:
 
 - Portainer
 - AdGuard
+- Tailscale
 
 ### Applications
 

@@ -38,6 +38,7 @@ The lab is built as a practical learning environment where new technologies are 
 * Qualys Scanner Appliance
 * `infra-homepage01` Debian 13 LXC providing the Homepage dashboard
 * `infra-uptime01` Debian 13 LXC providing Uptime Kuma monitoring
+* CT 205 `infra-vpn01` Debian 13 unprivileged LXC providing Tailscale subnet routing
 
 ### Storage
 
@@ -54,6 +55,7 @@ The lab is built as a practical learning environment where new technologies are 
 * 1 Gb Ethernet
 * Proxmox `vmbr0`
 * Node-to-node `iperf3` baseline of approximately 934–935 Mbit/sec
+* Tailscale remote access through an approved private-LAN subnet route
 
 ### Monitoring
 
@@ -61,11 +63,13 @@ The lab is built as a practical learning environment where new technologies are 
 * Node Exporter
 * Grafana
 * Uptime Kuma
+* `infra-vpn01` Node Exporter metrics and ICMP availability monitoring
 
 ### Security
 
 * Qualys Scanner Appliance
 * Kali Linux
+* Tailscale 1.102.4 remote access for two enrolled household phones
 
 ### Applications
 
@@ -121,9 +125,9 @@ The initial local backup and recovery implementation is complete. The Proxmox cl
 
 ## Public Documentation Policy
 
-This repository is public. Documentation intentionally describes architecture, configuration concepts, and benchmark results without publishing unnecessary internal network identifiers such as private IP addresses, MAC addresses, or internal DNS details.
+This repository is public. Documentation intentionally describes architecture, configuration concepts, and benchmark results without publishing internal network identifiers such as private IP addresses, private subnet ranges, gateways, internal DNS servers, MAC addresses, or internal DNS names.
 
-Actual addressing and other environment-specific operational details are maintained separately from the public repository.
+Actual addressing and other environment-specific operational details are maintained separately from the public repository. Sanitized examples use descriptive placeholders where configuration context is useful.
 
 ## Project Status
 

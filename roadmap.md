@@ -32,12 +32,16 @@ Prometheus Alertmanager and Blackbox Exporter are intentionally deferred. Uptime
 - [x] Connect additional lab systems
 - [x] Establish network performance baseline
 - [x] Deploy internal DNS
+- [x] Deploy dedicated Tailscale remote-access subnet router
+- [x] Approve the private-LAN subnet route
+- [x] Enroll trusted household phones and validate remote access over cellular service
 - [ ] Configure internal hostname resolution
 - [ ] Deploy Certificate Authority
 - [ ] Establish internal PKI
 - [ ] Configure internal TLS certificates
 - [ ] Implement VLANs
 - [ ] Implement network segmentation
+- [ ] Introduce granular Tailscale ACLs or grants before enrolling less-trusted devices
 
 ## Phase 4 — Storage and Backup
 
@@ -90,6 +94,9 @@ See [Backup and Recovery](docs/backup.md) for the implemented architecture, rete
 - [x] Benchmark the upgraded `pve02` configuration
 - [x] Deploy dedicated Homepage infrastructure LXC
 - [x] Deploy dedicated Uptime Kuma infrastructure LXC
+- [x] Deploy dedicated `infra-vpn01` Tailscale subnet-router LXC
+- [x] Add Node Exporter and Uptime Kuma monitoring for `infra-vpn01`
+- [x] Add Tailscale management access to Homepage
 
 ## Future Ideas
 
@@ -117,10 +124,11 @@ See [Backup and Recovery](docs/backup.md) for the implemented architecture, rete
 - [x] Maintain benchmark history
 - [x] Document Homepage deployment
 - [x] Document Uptime Kuma deployment
+- [x] Document Tailscale deployment and subnet-routing configuration
 - [x] Document monitoring architecture
 - [x] Define backup and recovery project plan
 - [x] Document backup and recovery procedures
 
 ## Notes
 
-The roadmap was updated on September 9, 2026 to reflect completion of the initial Proxmox backup and recovery implementation. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, Uptime Kuma availability monitoring, and initial local backup/recovery capability are complete. The lab now has scheduled NAS-backed backups, retention/pruning, and a verified representative restore. High availability, centralized logging, network segmentation, offsite backup, and advanced security infrastructure remain future work.
+The roadmap was updated on September 22, 2026 to reflect completion of the Tailscale remote-access deployment. The two-node Proxmox cluster, G5 hardware upgrades, workload benchmarking, dedicated Homepage dashboard, Uptime Kuma availability monitoring, Tailscale subnet routing, and initial local backup/recovery capability are complete. The lab now provides monitored remote access for trusted household devices alongside scheduled NAS-backed backups, retention/pruning, and a verified representative restore. High availability, centralized logging, granular access controls for any future less-trusted tailnet devices, network segmentation, offsite backup, and advanced security infrastructure remain future work.
