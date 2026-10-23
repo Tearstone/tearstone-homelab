@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-23
+
+### Immich Container Logging
+
+* Configured the `immich-server` Compose service on `lab-core01` with Docker's `local` logging driver, `max-size: "10m"`, and `max-file: "3"`.
+* Verified the running `immich_server` container reports the configured driver and limits through `docker inspect`.
+* Documented the Compose file location, application and verification commands, recreation behavior, and the scope of the log retention policy in `applications/immich.md`.
+* Recorded that browser/photo validation remains unconfirmed and that the previously observed `restart: "no"` policy was not changed.
+
 ## 2026-09-22
 
 ### Tailscale Remote Access
