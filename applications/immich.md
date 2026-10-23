@@ -125,6 +125,49 @@ A manual backup of `lab-kali01` was successfully created at the NAS before remov
 
 Before the Immich storage migration, the existing 14 GB encoded-video data and 1.8 GB of Immich backups were copied to the NAS and verified by file count. The original local copies were retained temporarily, then removed after the migrated Immich server was verified healthy and functional.
 
+## Container Log Rotation
+
+The `immich-server` Compose service (container `immich_server`) on `lab-core01` uses Docker's `local` logging driver with rotation enabled.
+
+Compose file: `/opt/immich/docker-compose.yml`.
+
+The following settings are nested under the `immich-server` service, at the same indentation level as `restart` and `healthcheck`:
+
+```yaml
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+```
+
+This retains up to three rotating log files of approximately 10 MB each for the server container. The local driver compresses rotated logs by default. The policy applies to container console output, not the photo library, PostgreSQL data, or other containers.
+
+### Applying and Verifying
+
+Run Compose commands from the deployment directory:
+
+```bash
+cd /opt/immich
+docker compose config --quiet
+docker compose up -d --no-deps immich-server
+docker inspect --format '{{json .HostConfig.LogConfig}}' immich_server
+```
+
+Applying a logging change recreates the server container, briefly interrupts Immich, and replaces its previous container log history.
+
+Verified output from the running container:
+
+```json
+{"Type":"local","Config":{"max-file":"3","max-size":"10m"}}
+```
+
+The active logging configuration was verified during the October 23, 2026 documentation update. A browser check that opens Immich and loads several photos remains unconfirmed in this session.
+
+The Compose section inspected before this change contained `restart: "no"`. This logging change did not alter that policy; automatic container restart behavior remains a separate follow-up.
+
+Reference: [Docker local logging driver](https://docs.docker.com/engine/logging/drivers/local/).
+
 ## Operational Notes
 
 Do not manually move or rename files within Immich's managed storage. Immich tracks managed media paths in its database and Storage Template operations should be used for managed media changes.
